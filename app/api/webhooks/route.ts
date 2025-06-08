@@ -4,6 +4,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
+    const CLERK_WEBHOOK_SIGNING_SECRET = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
+    if(!CLERK_WEBHOOK_SIGNING_SECRET){
+      throw new Error(
+        "Error: Please add CLERK_WEBHOOK_SIGNING_SECRET from Clerk Dashboard to .env or .env.local"
+      );
+    }
+
+
     const evt = await verifyWebhook(req)
 
     // Do something with payload
