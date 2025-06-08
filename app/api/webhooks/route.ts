@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       const { id, email_addresses, first_name, last_name } = evt.data;
   
       const user = {
-        clerkId: id,
+        clerkID: id,
         email: email_addresses[0].email_address,
         firstName: first_name,
         lastName: last_name,
