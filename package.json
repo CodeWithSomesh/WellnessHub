@@ -12,12 +12,16 @@
     "@clerk/nextjs": "^6.21.0",
     "@clerk/themes": "^2.2.49",
     "@radix-ui/react-slot": "^1.2.3",
+    "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.513.0",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.15.1",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "svix": "^1.67.0",
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
