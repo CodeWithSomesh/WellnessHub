@@ -2,8 +2,13 @@ import React from 'react';
 import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
+import { UserButton } from '@clerk/nextjs';
 
-const Navbar = () => {
+const Navbar = async () => {
+  
+  const { userId } = await auth();
+
   return (
     <nav className="w-full  border-b border-primary/20 sticky top-0 z-100">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,12 +54,20 @@ const Navbar = () => {
 
           {/* Login Button */}
           <div className="flex items-center">
-            <Link href='/sign-up'>
-                <Button className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-bold p-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
-                    <User size={16} />
-                    <span className="hidden sm:inline">Log In</span>
-                </Button>
-            </Link>
+            {!userId ? (
+              <Link href='/sign-up'>
+                  <Button className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-black font-bold p-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
+                      <User size={16} />
+                      <span className="hidden sm:inline">Log In</span>
+                  </Button>
+              </Link>
+            ) : (
+              <>
+                <li className="flex items-center">
+                  <UserButton />
+                </li>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button - shown on mobile, hidden on md+ */}
