@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Image from 'next/image'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 // Define the exercise type
 interface Exercise {
@@ -155,8 +156,8 @@ export default function WorkoutsPage() {
         {/* Exercises Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {exercises.map((exercise) => (
-            <div key={exercise.id} className="bg-white rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
-              <div className="relative h-48 w-full">
+            <div key={exercise.id} className="bg-yellow-100 rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
+              <div className="relative h-72 w-full">
                 <Image
                   src={exercise.gifUrl}
                   alt={exercise.name}
@@ -165,19 +166,19 @@ export default function WorkoutsPage() {
                   unoptimized // Since these are GIFs from external API
                 />
               </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg text-gray-800 capitalize mb-2">
+              <div className="p-4 border-t-2 border-amber-300">
+                <h3 className="font-bold text-lg lg:text-xl text-gray-800 capitalize mb-4">
                   {exercise.name}
                 </h3>
-                <div className="space-y-1 text-sm text-gray-600 mb-3">
-                  <p><span className="font-medium">Target:</span> {exercise.target}</p>
-                  <p><span className="font-medium">Body Part:</span> {exercise.bodyPart}</p>
-                  <p><span className="font-medium">Equipment:</span> {exercise.equipment}</p>
+                <div className="space-y-1 text-sm text-gray-600 mb-5">
+                  <p className='capitalize'><span className="font-medium">Target:</span> {exercise.target}</p>
+                  <p className='capitalize'><span className="font-medium">Body Part:</span> {exercise.bodyPart}</p>
+                  <p className='capitalize'><span className="font-medium">Equipment:</span> {exercise.equipment}</p>
                 </div>
                 {exercise.instructions && exercise.instructions.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-sm font-medium text-gray-700 mb-1">Instructions:</p>
-                    <p className="text-xs text-gray-600 line-clamp-3">
+                    <p className="text-sm font-bold underline text-gray-700 mb-1">Instructions:</p>
+                    <p className="text-xs text-gray-600 line-clamp-3 text-justify">
                       {exercise.instructions[0]}
                     </p>
                   </div>
@@ -185,6 +186,14 @@ export default function WorkoutsPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Results Info */}
+        <div className="text-center mt-8 mb-4 text-gray-600">
+          <p>Showing {exercises.length} exercises</p>
+          {selectedBodyPart && (
+            <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedBodyPart}</span></p>
+          )}
         </div>
 
         {/* Pagination */}
@@ -199,7 +208,7 @@ export default function WorkoutsPage() {
                   : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >
-              Previous
+              <ChevronLeft />
             </button>
             <span className="text-gray-600 font-medium">
               Page {currentPage + 1}
@@ -208,18 +217,11 @@ export default function WorkoutsPage() {
               onClick={handleNextPage}
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
             >
-              Next
+              <ChevronRight />
             </button>
           </div>
         )}
 
-        {/* Results Info */}
-        <div className="text-center mt-8 text-gray-600">
-          <p>Showing {exercises.length} exercises</p>
-          {selectedBodyPart && (
-            <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedBodyPart}</span></p>
-          )}
-        </div>
       </div>
     </div>
   )
