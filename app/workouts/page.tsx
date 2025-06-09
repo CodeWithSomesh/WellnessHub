@@ -17,12 +17,13 @@ interface Exercise {
 }
 
 export default function WorkoutsPage() {
+  //Initialize State 
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
-  const [limit] = useState(12) // Exercises per page
+  const [limit] = useState(12) // Limit to 12 Exercises per page
 
   // Fetch exercises from the API
   const fetchExercises = async (offset = 0, bodyPartFilter = '') => {
@@ -127,9 +128,9 @@ export default function WorkoutsPage() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleBodyPartChange('')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedBodyPart === ''
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[#D433F8] text-white'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -139,9 +140,9 @@ export default function WorkoutsPage() {
               <button
                 key={bodyPart}
                 onClick={() => handleBodyPartChange(bodyPart)}
-                className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
                   selectedBodyPart === bodyPart
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[#D433F8] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -154,7 +155,7 @@ export default function WorkoutsPage() {
         {/* Exercises Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {exercises.map((exercise) => (
-            <div key={exercise.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div key={exercise.id} className="bg-white rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
               <div className="relative h-48 w-full">
                 <Image
                   src={exercise.gifUrl}
