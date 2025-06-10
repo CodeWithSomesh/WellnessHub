@@ -4,25 +4,6 @@ import { auth } from '@clerk/nextjs/server'
 import { connect } from '@/db'
 import FavoriteWorkout from '@/modals/favWorkouts.modal'
 
-// GET - Fetch user's favorite workouts
-export async function GET() {
-  try {
-    const { userId } = await auth()
-    
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    await connect()
-    
-    const favorites = await FavoriteWorkout.find({ userId }).sort({ createdAt: -1 })
-    
-    return NextResponse.json({ favorites })
-  } catch (error) {
-    console.error('Error fetching favorites:', error)
-    return NextResponse.json({ error: 'Failed to fetch favorites' }, { status: 500 })
-  }
-}
 
 // POST - Add workout to favorites
 export async function POST(req: NextRequest) {
@@ -76,3 +57,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to add to favorites' }, { status: 500 })
   }
 }
+
+// GET - Fetch user's favorite workouts
+export async function GET() {
+    try {
+      const { userId } = await auth()
+      
+      if (!userId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+  
+      await connect()
+      
+      const favorites = await FavoriteWorkout.find({ userId }).sort({ createdAt: -1 })
+      
+      return NextResponse.json({ favorites })
+    } catch (error) {
+      console.error('Error fetching favorites:', error)
+      return NextResponse.json({ error: 'Failed to fetch favorites' }, { status: 500 })
+    }
+  }
