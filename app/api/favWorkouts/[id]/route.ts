@@ -4,18 +4,21 @@ import { connect } from '@/db'
 import FavoriteWorkout from '@/modals/favWorkouts.modal'
 
 // PUT - Update comment on favorite workout
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
+    
     const { comment } = await req.json()
-    const { id } = context.params
-
+    const { id } = await params
+    
     await connect()
-
+    
     const updatedFavorite = await FavoriteWorkout.findOneAndUpdate(
       { _id: id, userId },
       { 
@@ -24,16 +27,15 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
       },
       { new: true }
     )
-
+    
     if (!updatedFavorite) {
       return NextResponse.json({ error: 'Favorite not found' }, { status: 404 })
     }
-
+    
     return NextResponse.json({ 
       message: 'Comment updated',
       favorite: updatedFavorite 
     })
-
   } catch (error) {
     console.error('Error updating favorite:', error)
     return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 })
@@ -41,28 +43,30 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
 }
 
 // DELETE - Remove from favorites
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const { id } = context.params
-
+    
+    const { id } = await params
+    
     await connect()
-
+    
     const deletedFavorite = await FavoriteWorkout.findOneAndDelete({
       _id: id,
       userId
     })
-
+    
     if (!deletedFavorite) {
       return NextResponse.json({ error: 'Favorite not found' }, { status: 404 })
     }
-
+    
     return NextResponse.json({ message: 'Removed from favorites' })
-
   } catch (error) {
     console.error('Error removing favorite:', error)
     return NextResponse.json({ error: 'Failed to remove from favorites' }, { status: 500 })
