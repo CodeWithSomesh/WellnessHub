@@ -462,7 +462,7 @@ export default function WorkoutsPage() {
                   <button
                     onClick={removeFromFavorites}
                     disabled={isUpdating}
-                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-[#D433F8] text-white py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUpdating ? 'Removing...' : 'Remove'}
                   </button>
