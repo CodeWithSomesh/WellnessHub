@@ -4,21 +4,20 @@ import { connect } from '@/db'
 import FavoriteWorkout from '@/modals/favWorkouts.modal'
 
 // PUT - Update comment on favorite workout
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: { id: string } }) {
   try {
     const { userId } = await auth()
-    
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { comment } = await req.json()
-    const { id } = params
+    const { id } = context.params
 
     await connect()
 
     const updatedFavorite = await FavoriteWorkout.findOneAndUpdate(
-      { _id: id, userId }, // Make sure user owns this favorite
+      { _id: id, userId },
       { 
         comment,
         updatedAt: new Date()
@@ -42,17 +41,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE - Remove from favorites
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
   try {
     const { userId } = await auth()
-    
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await connect()
+    const { id } = context.params
 
-    const { id } = params
+    await connect()
 
     const deletedFavorite = await FavoriteWorkout.findOneAndDelete({
       _id: id,
