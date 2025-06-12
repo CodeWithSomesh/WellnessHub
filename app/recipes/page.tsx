@@ -143,7 +143,10 @@ export default function RecipesPage() {
     }
   }
 
-  
+  // Check if recipe is already favorited
+  const isFavorited = (recipeId: number) => {
+    return favorites.some(fav => fav.recipeId === recipeId.toString())
+  }
 
   // Get favorite data for a recipe
   const getFavoriteData = (recipeId: number) => {
@@ -381,7 +384,19 @@ export default function RecipesPage() {
           {recipes.map((recipe) => (
             <div key={recipe.id} className="bg-orange-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
               {/* Heart Icon */}
-              
+              <button
+                onClick={() => handleHeartClick(recipe)}
+                className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-sm transition-all ${
+                  isFavorited(recipe.id)
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+                }`}
+              >
+                <Heart 
+                  size={20} 
+                  className={isFavorited(recipe.id) ? 'fill-current' : ''} 
+                />
+              </button>
               
               <div className="relative h-48 w-full">
                 {recipe.thumbnail_url ? (
@@ -458,12 +473,29 @@ export default function RecipesPage() {
                   </div>
                 )}
 
-                
+                {/* Show comment if favorited */}
+                {isFavorited(recipe.id) && getFavoriteData(recipe.id)?.comment && (
+                  <div className="mt-3 p-2 bg-blue-50 rounded-lg border-2 border-gray-400">
+                    <div className="flex items-start space-x-2">
+                      <MessageSquare size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-blue-800 line-clamp-3">
+                        {getFavoriteData(recipe.id)?.comment}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
 
+        {/* Results Info */}
+        <div className="text-center mt-8 mb-4 text-gray-600">
+          <p>Showing {recipes.length} recipes</p>
+          {selectedTag && (
+            <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedTag.replace(/_/g, ' ')}</span></p>
+          )}
+        </div>
 
         {/* Pagination */}
         <div className="flex justify-center items-center space-x-4">
