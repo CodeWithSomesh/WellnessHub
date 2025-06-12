@@ -490,7 +490,92 @@ export default function RecipesPage() {
         </div>
       </div>
 
-      
+      {/* Comment Modal */}
+      {showCommentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {editingFavorite ? 'Edit Note' : 'Add to Favorites'}
+              </h3>
+              <button 
+                onClick={() => setShowCommentModal(false)}
+                className="text-gray-500 hover:text-white hover:bg-red-500 rounded-full p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {selectedRecipe && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-800">{selectedRecipe.name}</h4>
+                <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                  {selectedRecipe.total_time_minutes && (
+                    <div className="flex items-center space-x-1">
+                      <Clock size={14} />
+                      <span>{formatTime(selectedRecipe.total_time_minutes)}</span>
+                    </div>
+                  )}
+                  {selectedRecipe.servings && (
+                    <div className="flex items-center space-x-1">
+                      <Users size={14} />
+                      <span>{selectedRecipe.servings} servings</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Add a personal note (optional)
+              </label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="e.g., Made this last week and loved it! Need to try with less salt next time..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex space-x-3">
+              {editingFavorite ? (
+                <>
+                  <button
+                    onClick={updateFavoriteComment}
+                    disabled={isUpdating}
+                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUpdating ? 'Updating...' : 'Update Note'}
+                  </button>
+                  <button
+                    onClick={removeFromFavorites}
+                    disabled={isUpdating}
+                    className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUpdating ? 'Removing...' : 'Remove'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={addToFavorites}
+                  disabled={isUpdating}
+                  className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isUpdating ? 'Adding...' : 'Add to Favorites'}
+                </button>
+              )}
+              <button
+                onClick={() => setShowCommentModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-red-500 hover:text-white"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
