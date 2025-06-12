@@ -174,7 +174,33 @@ export default function RecipesPage() {
     }
   }
 
-  
+  // Add to favorites
+  const addToFavorites = async () => {
+    if (!selectedRecipe || !user) return
+    
+    setIsUpdating(true)
+    try {
+      await axios.post('/api/favRecipes', {
+        recipe: selectedRecipe,
+        comment
+      })
+      
+      // Refresh favorites
+      await fetchFavorites()
+      setShowCommentModal(false)
+      setComment('')
+      setSelectedRecipe(null)
+    } catch (error: any) {
+      console.error('Error adding to favorites:', error)
+      if (error.response?.status === 409) {
+        alert('This recipe is already in your favorites!')
+      } else {
+        alert('Failed to add to favorites')
+      }
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   // Update favorite comment
   const updateFavoriteComment = async () => {
