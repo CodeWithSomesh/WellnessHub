@@ -199,7 +199,26 @@ export default function RecipesPage() {
     }
   }
 
-
+  // Remove from favorites
+  const removeFromFavorites = async () => {
+    if (!editingFavorite) return
+    
+    setIsUpdating(true)
+    try {
+      await axios.delete(`/api/favRecipes/${editingFavorite._id}`)
+      
+      // Refresh favorites
+      await fetchFavorites()
+      setShowCommentModal(false)
+      setComment('')
+      setEditingFavorite(null)
+    } catch (error) {
+      console.error('Error removing from favorites:', error)
+      alert('Failed to remove from favorites')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   // Popular recipe tags for filtering
   const recipeTags = [
