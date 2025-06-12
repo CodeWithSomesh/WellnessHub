@@ -176,7 +176,28 @@ export default function RecipesPage() {
 
   
 
-  
+  // Update favorite comment
+  const updateFavoriteComment = async () => {
+    if (!editingFavorite) return
+    
+    setIsUpdating(true)
+    try {
+      await axios.put(`/api/favRecipes/${editingFavorite._id}`, {
+        comment
+      })
+      
+      // Refresh favorites
+      await fetchFavorites()
+      setShowCommentModal(false)
+      setComment('')
+      setEditingFavorite(null)
+    } catch (error) {
+      console.error('Error updating comment:', error)
+      alert('Failed to update comment')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
 
 
