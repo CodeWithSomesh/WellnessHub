@@ -32,8 +32,8 @@ const Navbar = () => {
             <div className="flex items-baseline space-x-6">
               {[
                 { href: '/workouts', label: 'Workouts', bg: 'bg-[#D433F8]' },
-                { href: '/recipes', label: 'Recipes', bg: 'bg-[#33d1f8]' },
-                { href: '/restaurants', label: 'Restaurants', bg: 'bg-[#f83333]' },
+                { href: '/classicRecipes', label: 'Classic Recipes', bg: 'bg-[#33d1f8]' },
+                { href: '/veganRecipes', label: 'Vegan Recipes', bg: 'bg-[#f83333]' },
                 { href: '/quotes', label: 'Quotes', bg: 'bg-[#33f875]' },
               ].map(({ href, label, bg }) => (
                 <a
@@ -82,8 +82,8 @@ const Navbar = () => {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-primary/20">
               {[
                 { href: '/workouts', label: 'Workouts' },
-                { href: '/recipes', label: 'Recipes' },
-                { href: '/restaurants', label: 'Restaurants' },
+                { href: '/classicRecipes', label: 'Classic Recipes' },
+                { href: '/veganRecipes', label: 'Vegan Recipes' },
                 { href: '/quotes', label: 'Quotes' },
               ].map(({ href, label }) => (
                 <a
