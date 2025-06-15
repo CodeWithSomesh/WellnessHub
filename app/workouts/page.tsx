@@ -20,6 +20,7 @@ interface Exercise {
   secondaryMuscles: string[]
 }
 
+// Define the favourite exercise type
 interface FavoriteWorkout {
   _id: string
   exerciseId: string

@@ -6,7 +6,6 @@ const FavoriteWorkoutSchema = new Schema({
     type: String, 
     required: true,
   },
-  
   // Exercise details from the API (we store them so we don't lose data if API changes)
   exerciseId: {
     type: String,
