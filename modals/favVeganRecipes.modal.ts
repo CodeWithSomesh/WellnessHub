@@ -1,74 +1,54 @@
-// modals/favVeganRecipes.modal.ts
+// modals/favRecipes.modal.ts
 import mongoose from 'mongoose'
 
-const FavoriteVeganRecipeSchema = new mongoose.Schema({
+const favoriteRecipeSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
-    index: true
   },
   recipeId: {
     type: String,
-    required: true
+    required: true,
   },
   recipeName: {
     type: String,
-    required: true
+    required: true,
   },
-  difficuty: {
+  difficulty: {
     type: String,
-    default: ''
   },
   portion: {
     type: String,
-    default: ''
   },
   time: {
     type: String,
-    default: ''
   },
   image: {
-    type: Number,
-    default: 0
+    type: String,
   },
   description: {
-    type: Number,
-    default: 0
+    type: String,
   },
-  ingredients: {
-    type: Number,
-    default: 0
+  ingredients: [{
+    type: String,
+  }],
+  method: [{
+    type: String,
+  }],
+  category: {
+    type: String,
   },
-  tags: [{
-    type: String
-  }],
-  instructions: [{
-    step: Number,
-    text: String
-  }],
-  // User's personal note/comment
   comment: {
     type: String,
-    default: "",
+    default: '',
   },
-  
-  // When they favorited it
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  
-  // When comment was last updated
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-  
+}, {
+  timestamps: true,
 })
 
-// Compound index to ensure unique recipe per user
-FavoriteVeganRecipeSchema.index({ userId: 1, recipeId: 1 }, { unique: true })
+// Create compound index to prevent duplicate favorites
+favoriteRecipeSchema.index({ userId: 1, recipeId: 1 }, { unique: true })
 
-const FavoriteRecipe = mongoose.models.FavoriteRecipe || mongoose.model('FavoriteRecipe', FavoriteVeganRecipeSchema)
+const FavoriteRecipe = mongoose.models.FavoriteRecipe || mongoose.model('FavoriteRecipe', favoriteRecipeSchema)
 
 export default FavoriteRecipe
