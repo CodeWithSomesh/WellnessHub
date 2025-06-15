@@ -34,7 +34,7 @@ const Navbar = () => {
                 { href: '/workouts', label: 'Workouts', bg: 'bg-[#D433F8]' },
                 { href: '/classicRecipes', label: 'Classic Recipes', bg: 'bg-[#33d1f8]' },
                 { href: '/veganRecipes', label: 'Vegan Recipes', bg: 'bg-[#f83333]' },
-                { href: '/quotes', label: 'Quotes', bg: 'bg-[#33f875]' },
+                { href: '/gyms', label: 'Gyms', bg: 'bg-[#33f875]' },
               ].map(({ href, label, bg }) => (
                 <a
                   key={href}
@@ -84,7 +84,7 @@ const Navbar = () => {
                 { href: '/workouts', label: 'Workouts' },
                 { href: '/classicRecipes', label: 'Classic Recipes' },
                 { href: '/veganRecipes', label: 'Vegan Recipes' },
-                { href: '/quotes', label: 'Quotes' },
+                { href: '/gyms', label: 'Gyms' },
               ].map(({ href, label }) => (
                 <a
                   key={href}

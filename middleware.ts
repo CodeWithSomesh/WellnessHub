@@ -7,7 +7,7 @@ const isPublicRoute = createRouteMatcher([
   '/workouts',
   '/recipes',
   '/restaurants',
-  '/quotes',
+  '/gyms',
   '/api/webhooks(.*)'
 ])
 
