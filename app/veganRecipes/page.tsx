@@ -8,8 +8,8 @@ import { ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react'
 import { Heart, MessageSquare, X, Clock, Users, RefreshCw } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 
-// Define the recipe type
-interface Recipe {
+// Define the vegan recipe type
+interface VeganRecipe {
   id: string
   title: string
   image: string
@@ -22,8 +22,8 @@ interface Recipe {
   category?: string
 }
 
-// Define the favourite recipe type
-interface FavoriteRecipe {
+// Define the favourite vegan recipe type
+interface FavoriteVeganRecipe {
   _id: string
   recipeId: string
   recipeName: string
@@ -47,11 +47,20 @@ const API_CONFIG = {
   }
 }
 
+// Function to normalize difficulty values from API
+const normalizeDifficulty = (difficulty: string): string => {
+  const lower = difficulty.toLowerCase()
+  if (lower.includes('easy')) return 'Easy'
+  if (lower.includes('medium')) return 'Medium'  
+  if (lower.includes('challenge')) return 'Challenge'
+  return difficulty // return original if no match
+}
+
 export default function RecipesPage() {
   // Initialize State 
   const { user, isLoaded } = useUser()
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [favorites, setFavorites] = useState<FavoriteRecipe[]>([])
+  const [recipes, setRecipes] = useState<VeganRecipe[]>([])
+  const [favorites, setFavorites] = useState<FavoriteVeganRecipe[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('')
@@ -63,22 +72,52 @@ export default function RecipesPage() {
 
   // Modal states
   const [showCommentModal, setShowCommentModal] = useState(false)
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
+  const [selectedRecipe, setSelectedRecipe] = useState<VeganRecipe | null>(null)
   const [comment, setComment] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
-  const [editingFavorite, setEditingFavorite] = useState<FavoriteRecipe | null>(null)
+  const [editingFavorite, setEditingFavorite] = useState<FavoriteVeganRecipe | null>(null)
 
   // UI State
   const [showFilters, setShowFilters] = useState(false)
 
-  // Recipe categories for filtering
+  // Recipe categories for filtering - Updated to focus on difficulties
   const categories = useMemo(() => [
-    'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 'Appetizer',
-    'Main Course', 'Side Dish', 'Soup', 'Salad', 'Smoothie', 'Beverage'
+    'Easy',
+    'Medium', 
+    'Challenge'
   ], [])
 
-  // Memoized filtered recipes
+  // Memoized filtered recipes with pagination
   const filteredRecipes = useMemo(() => {
+    const filtered = recipes.filter(recipe => {
+      const matchesSearch = !searchTerm || 
+        recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipe.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipe.ingredients?.some(ingredient => 
+          ingredient.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      
+      // Enhanced difficulty matching
+      const matchesCategory = !selectedCategory || 
+        recipe.difficulty?.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+        recipe.category?.toLowerCase().includes(selectedCategory.toLowerCase())
+      
+      return matchesSearch && matchesCategory
+    })
+    
+    // Update pagination info based on filtered results
+    const calculatedTotalPages = Math.ceil(filtered.length / limit)
+    setTotalPages(calculatedTotalPages)
+    setHasMore((currentPage + 1) * limit < filtered.length)
+    
+    // Apply pagination to filtered results
+    const startIndex = currentPage * limit
+    const endIndex = startIndex + limit
+    return filtered.slice(startIndex, endIndex)
+  }, [recipes, searchTerm, selectedCategory, currentPage, limit])
+
+  // Get total filtered count for display
+  const totalFilteredCount = useMemo(() => {
     return recipes.filter(recipe => {
       const matchesSearch = !searchTerm || 
         recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,15 +126,17 @@ export default function RecipesPage() {
           ingredient.toLowerCase().includes(searchTerm.toLowerCase())
         )
       
+      // Enhanced difficulty matching
       const matchesCategory = !selectedCategory || 
+        recipe.difficulty?.toLowerCase().includes(selectedCategory.toLowerCase()) ||
         recipe.category?.toLowerCase().includes(selectedCategory.toLowerCase())
       
       return matchesSearch && matchesCategory
-    })
+    }).length
   }, [recipes, searchTerm, selectedCategory])
 
-  // Fetch recipes from the API with better error handling
-  const fetchRecipes = useCallback(async (offset = 0, categoryFilter = '') => {
+  // Fetch recipes from the API with error handling
+  const fetchRecipes = useCallback(async () => {
     setLoading(true)
     setError(null)
     
@@ -111,10 +152,10 @@ export default function RecipesPage() {
 
       const response = await axios.request(options)
       
-      // Process the response data - assuming it's an array of recipes
+      // Process the array of recipes data 
       let recipesData = response.data
       
-      // If response.data is not an array, check if it has a recipes property
+      // If recipes data is not an array, check for recipes property
       if (!Array.isArray(recipesData)) {
         if (recipesData.recipes && Array.isArray(recipesData.recipes)) {
           recipesData = recipesData.recipes
@@ -125,30 +166,12 @@ export default function RecipesPage() {
         }
       }
 
-      // Filter by category if specified
-      if (categoryFilter && recipesData.length > 0) {
-        recipesData = recipesData.filter((recipe: any) => 
-          recipe.category?.toLowerCase().includes(categoryFilter.toLowerCase())
-        )
-      }
-
-      // Calculate pagination
-      const totalRecipes = recipesData.length
-      const calculatedTotalPages = Math.ceil(totalRecipes / limit)
-      setTotalPages(calculatedTotalPages)
-      setHasMore(offset + limit < totalRecipes)
-
-      // Apply pagination
-      const startIndex = offset
-      const endIndex = startIndex + limit
-      const paginatedRecipes = recipesData.slice(startIndex, endIndex)
-
-      // Map the data to our Recipe interface with better defaults
-      const mappedRecipes: Recipe[] = paginatedRecipes.map((recipe: any, index: number) => ({
-        id: recipe.id || recipe._id || `recipe-${Date.now()}-${offset + index}`,
+      // Map the data to vegan recipe interface with normalized difficulty
+      const mappedRecipes: VeganRecipe[] = recipesData.map((recipe: any, index: number) => ({
+        id: recipe.id || recipe._id || `recipe-${Date.now()}-${index}`,
         title: recipe.title || recipe.name || recipe.recipeName || 'Unnamed Recipe',
         image: recipe.image || recipe.imageUrl || recipe.photo || '/api/placeholder/400/300',
-        difficulty: recipe.difficulty || recipe.level || 'Medium',
+        difficulty: normalizeDifficulty(recipe.difficulty || recipe.level || 'Medium'),
         portion: recipe.portion || recipe.servings || recipe.serves || '4 servings',
         time: recipe.time || recipe.cookTime || recipe.prepTime || '30 mins',
         description: recipe.description || recipe.summary || 'Delicious vegan recipe',
@@ -162,7 +185,7 @@ export default function RecipesPage() {
     } catch (err: any) {
       console.error('Error fetching recipes:', err)
       
-      // Better error handling with specific messages
+      // Error handling with specific messages
       if (err.code === 'ECONNABORTED') {
         setError('Request timeout. Please check your internet connection and try again.')
       } else if (err.response?.status === 403) {
@@ -179,9 +202,9 @@ export default function RecipesPage() {
     } finally {
       setLoading(false)
     }
-  }, [limit])
+  }, [])
 
-  // Fetch user's favorite recipes with error handling
+  // Fetch user's favorite vegan recipes with error handling
   const fetchFavorites = useCallback(async () => {
     if (!user) return
     
@@ -191,23 +214,23 @@ export default function RecipesPage() {
       })
       setFavorites(response.data.favorites || [])
     } catch (error) {
+      // Display logs for user favorites error for debuging      
       console.error('Error fetching favorites:', error)
-      // Don't show error to user for favorites, just log it
     }
   }, [user])
 
-  // Check if recipe is already favorited
+  // Check if recipe is already set to favorited
   const isFavorited = useCallback((recipeId: string) => {
     return favorites.some(fav => fav.recipeId === recipeId)
   }, [favorites])
 
-  // Get favorite data for a recipe
+  // Get user favorite vegan recipies
   const getFavoriteData = useCallback((recipeId: string) => {
     return favorites.find(fav => fav.recipeId === recipeId)
   }, [favorites])
 
-  // Handle heart click with better UX
-  const handleHeartClick = useCallback((recipe: Recipe) => {
+  // User faviourte icon
+  const handleHeartClick = useCallback((recipe: VeganRecipe) => {
     if (!user) {
       alert('Please sign in to add favorites')
       return
@@ -216,13 +239,11 @@ export default function RecipesPage() {
     const favoriteData = getFavoriteData(recipe.id)
     
     if (favoriteData) {
-      // Already favorited, open modal to edit comment
       setEditingFavorite(favoriteData)
       setComment(favoriteData.comment)
       setSelectedRecipe(recipe)
       setShowCommentModal(true)
     } else {
-      // Not favorited, open modal to add
       setEditingFavorite(null)
       setComment('')
       setSelectedRecipe(recipe)
@@ -230,47 +251,46 @@ export default function RecipesPage() {
     }
   }, [user, getFavoriteData])
 
-// Add to favorites with better error handling
-const addToFavorites = useCallback(async () => {
-  if (!selectedRecipe || !user) return
-  
-  setIsUpdating(true)
-  try {
-    // Ensure we're sending the data in the format expected by the backend
-    const recipeData = {
-      ...selectedRecipe,
-      recipeName: selectedRecipe.title, 
-      name: selectedRecipe.title,
-    }
+  // Add to favorites with better error handling
+  const addToFavorites = useCallback(async () => {
+    if (!selectedRecipe || !user) return
     
-    await axios.post('/api/favRecipes', {
-      recipe: recipeData,
-      comment
-    }, {
-      timeout: 5000
-    })
-    
-    // Refresh favorites
-    await fetchFavorites()
-    setShowCommentModal(false)
-    setComment('')
-    setSelectedRecipe(null)
-  } catch (error: any) {
-    console.error('Error adding to favorites:', error)
-    if (error.response?.status === 409) {
-      alert('This recipe is already in your favorites!')
-    } else if (error.code === 'ECONNABORTED') {
-      alert('Request timeout. Please try again.')
-    } else if (error.response?.data?.message) {
-      // Show specific error message from backend
-      alert(`Failed to add to favorites: ${error.response.data.message}`)
-    } else {
-      alert('Failed to add to favorites. Please try again.')
+    setIsUpdating(true)
+    try {
+      const recipeData = {
+        ...selectedRecipe,
+        recipeName: selectedRecipe.title, 
+        name: selectedRecipe.title,
+      }
+      
+      await axios.post('/api/favRecipes', {
+        recipe: recipeData,
+        comment
+      }, {
+        timeout: 5000
+      })
+      
+      // Refresh favorites
+      await fetchFavorites()
+      setShowCommentModal(false)
+      setComment('')
+      setSelectedRecipe(null)
+    } catch (error: any) {
+      console.error('Error adding to favorites:', error)
+      if (error.response?.status === 409) {
+        alert('This recipe is already in your favorites!')
+      } else if (error.code === 'ECONNABORTED') {
+        alert('Request timeout. Please try again.')
+      } else if (error.response?.data?.message) {
+        // Show specific error message from backend
+        alert(`Failed to add to favorites: ${error.response.data.message}`)
+      } else {
+        alert('Failed to add to favorites. Please try again.')
+      }
+    } finally {
+      setIsUpdating(false)
     }
-  } finally {
-    setIsUpdating(false)
-  }
-}, [selectedRecipe, user, comment, fetchFavorites])
+  }, [selectedRecipe, user, comment, fetchFavorites])
 
   // Update favorite comment
   const updateFavoriteComment = useCallback(async () => {
@@ -337,7 +357,7 @@ const addToFavorites = useCallback(async () => {
   // Handle search
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term)
-    setCurrentPage(0) // Reset to first page
+    setCurrentPage(0)
   }, [])
 
   // Pagination handlers
@@ -353,13 +373,13 @@ const addToFavorites = useCallback(async () => {
 
   // Retry function
   const handleRetry = useCallback(() => {
-    fetchRecipes(currentPage * limit, selectedCategory)
-  }, [fetchRecipes, currentPage, limit, selectedCategory])
+    fetchRecipes()
+  }, [fetchRecipes])
 
   // Effects
   useEffect(() => {
-    fetchRecipes(currentPage * limit, selectedCategory)
-  }, [fetchRecipes, currentPage, limit, selectedCategory])
+    fetchRecipes()
+  }, [fetchRecipes])
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -447,7 +467,7 @@ const addToFavorites = useCallback(async () => {
             </button>
           </div>
 
-          {/* Category Filters */}
+          {/* Difficulty Filters */}
           {showFilters && (
             <div className="flex flex-wrap gap-2">
               <button
@@ -458,7 +478,7 @@ const addToFavorites = useCallback(async () => {
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                All Categories
+                All Levels
               </button>
               {categories.map((category) => (
                 <button
@@ -470,7 +490,7 @@ const addToFavorites = useCallback(async () => {
                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  {category}
+                  {category} Level
                 </button>
               ))}
             </div>
@@ -480,14 +500,14 @@ const addToFavorites = useCallback(async () => {
         {/* Results Info */}
         <div className="text-center mb-6 text-gray-600">
           <p>
-            Showing {filteredRecipes.length} of {recipes.length} recipes
+            Showing {filteredRecipes.length} of {totalFilteredCount} recipes
             {searchTerm && <span> matching "{searchTerm}"</span>}
             {selectedCategory && <span> in {selectedCategory}</span>}
           </p>
         </div>
 
         {/* No Results Message */}
-        {filteredRecipes.length === 0 && !loading && (
+        {totalFilteredCount === 0 && !loading && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No recipes found</h3>
@@ -653,7 +673,7 @@ const addToFavorites = useCallback(async () => {
         </div>
 
         {/* Pagination */}
-        {filteredRecipes.length > 0 && (
+        {totalFilteredCount > 0 && (
           <div className="flex justify-center items-center space-x-4">
             <button
               onClick={handlePrevPage}
