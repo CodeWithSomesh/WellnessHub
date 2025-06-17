@@ -9,6 +9,9 @@ import FavoriteWorkout from '@/modals/favWorkouts.modal'
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
+    const session = await auth();
+    console.log("Session Info:", session); // Should have userId
+
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
