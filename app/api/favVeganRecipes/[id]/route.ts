@@ -80,8 +80,9 @@ export async function POST(req: NextRequest) {
       message: 'Added to favorites',
       favorite: newFavorite 
     }, { status: 201 })
-
-  } catch (error: any) {
+  } 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  catch (error: any) {
     console.error("=== ERROR IN POST /api/favRecipes ===");
     console.error("Error name:", error.name);
     console.error("Error message:", error.message);
@@ -121,7 +122,9 @@ export async function GET() {
       console.log("Found favorites:", favorites.length);
       
       return NextResponse.json({ favorites })
-    } catch (error: any) {
+    } 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    catch (error: any) {
       console.error("=== ERROR IN GET /api/favRecipes ===");
       console.error("Error name:", error.name);
       console.error("Error message:", error.message);

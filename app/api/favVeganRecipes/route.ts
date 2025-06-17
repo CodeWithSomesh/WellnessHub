@@ -81,7 +81,9 @@ export async function POST(req: NextRequest) {
       favorite: newFavorite 
     }, { status: 201 })
 
-  } catch (error: any) {
+  } 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  catch (error: any) {
     console.error("=== ERROR IN POST /api/favRecipes ===");
     console.error("Error name:", error.name);
     console.error("Error message:", error.message);
