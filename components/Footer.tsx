@@ -1,5 +1,6 @@
 import { Heart, Github, Twitter, Instagram } from "lucide-react";
 
+
 const Footer = () => {
   return (
     <footer className="bg-white border-t-4 border-black py-12">
