@@ -1,4 +1,3 @@
-// modals/favRecipes.modal.ts
 import mongoose from 'mongoose'
 
 const FavoriteRecipeSchema = new mongoose.Schema({
