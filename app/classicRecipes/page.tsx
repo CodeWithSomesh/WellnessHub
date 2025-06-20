@@ -74,6 +74,8 @@ export default function RecipesPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedTag, setSelectedTag] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalRecipes, setTotalRecipes] = useState(0);
   const [size] = useState(20) // Limit to 20 recipes per page
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
@@ -284,6 +286,17 @@ export default function RecipesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user])
 
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      setTotalPages(Math.ceil(filteredRecipes.length / size));
+      setTotalRecipes(filteredRecipes.length);
+    }
+    else {
+      setTotalPages(Math.ceil(recipes.length / size));
+      setTotalRecipes(recipes.length);
+    }
+  });
+
   const handleSearch = (term: string) => {
     setSearchTerm(term)
     setCurrentPage(0)
@@ -336,12 +349,7 @@ export default function RecipesPage() {
       return matchesSearch && matchesTag
     })
     
-    setCurrentPage(0)
-    
-    // Apply pagination to filtered results
-    const startIndex = currentPage * size
-    const endIndex = startIndex + size
-    return filtered.slice(startIndex, endIndex)
+    return filtered
   }, [recipes, searchTerm, selectedTag, currentPage, size])
 
   if (loading) {
@@ -443,7 +451,7 @@ export default function RecipesPage() {
         </div>
 
         {/* No Results Message */}
-        {filteredRecipes.length === 0 && !loading && (
+        {totalPages === 0 && !loading && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No recipes found</h3>
@@ -574,7 +582,7 @@ export default function RecipesPage() {
 
         {/* Results Info */}
         <div className="text-center mt-8 mb-4 text-gray-600">
-          <p>Showing {recipes.length} recipes</p>
+          <p>Showing {Math.min(((currentPage + 1) * size), totalRecipes)} recipes</p>
           {selectedTag && (
             <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedTag.replace(/_/g, ' ')}</span></p>
           )}

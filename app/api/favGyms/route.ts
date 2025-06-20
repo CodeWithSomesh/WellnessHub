@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
       gymId: gym.place_id.toString(),
       gymName: gym.name,
       address: gym.formatted_address,
+      phoneNumber: gym.formatted_phone_number || '',
       rating: gym.rating || null,
       photoUrl: gym.photoUrl || '',
       comment: comment || ''

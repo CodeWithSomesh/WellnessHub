@@ -19,6 +19,10 @@ const FavoriteGymSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  phoneNumber: {
+    type: String,
+    required: true
+  },
   rating: {
     type: Number,
     default: null

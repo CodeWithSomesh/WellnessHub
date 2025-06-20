@@ -43,6 +43,8 @@ export default function WorkoutsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalExercises, setTotalExercises] = useState(0);
   const [limit] = useState(12) // Limit to 12 Exercises per page
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
@@ -75,7 +77,7 @@ export default function WorkoutsPage() {
           offset: offset.toString()
         },
         headers: {
-          'x-rapidapi-key': '0ec4e2095amsh1c726e3df00bfa6p12aac3jsnecd514c6e9e6',
+          'x-rapidapi-key': '96158a4a19msh3fb595b7d64c176p14278ejsn27637bfd3c43',
           'x-rapidapi-host': 'exercisedb.p.rapidapi.com'
         }
       }
@@ -220,6 +222,11 @@ export default function WorkoutsPage() {
     }
   }
 
+  const handleSearch = (term: string) => {
+    setSearchTerm(term)
+    setCurrentPage(0)
+  };
+
   // Body parts for filtering
   const bodyParts = [
     'back', 'cardio', 'chest', 'lower arms', 'lower legs',
@@ -238,10 +245,16 @@ export default function WorkoutsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user])
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-    setCurrentPage(0)
-  };
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      setTotalPages(Math.ceil(filteredExercises.length / limit));
+      setTotalExercises(filteredExercises.length);
+    }
+    else {
+      setTotalPages(Math.ceil(exercises.length / limit));
+      setTotalExercises(exercises.length);
+    }
+  });
 
   const handleBodyPartChange = (bodyPart: string) => {
     setSelectedBodyPart(bodyPart)
@@ -257,27 +270,25 @@ export default function WorkoutsPage() {
   }
 
   const filteredExercises = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+
     const filtered = exercises.filter(exercise => {
       const matchesSearch = !searchTerm ||
-      exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exercise.target.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exercise.bodyPart.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exercise.equipment.toString().includes(searchTerm.toLowerCase()) ||
-      exercise.instructions.toString().includes(searchTerm.toLowerCase())
-      
-      // Enhanced difficulty matching
-      const matchesBodyPart = !selectedBodyPart || bodyParts?.includes(selectedBodyPart)
-      
-      return matchesSearch && matchesBodyPart
-    })
-    
-    setCurrentPage(0)
-    
-    // Apply pagination to filtered results
-    const startIndex = currentPage * limit
-    const endIndex = startIndex + limit
-    return filtered.slice(startIndex, endIndex)
-  }, [exercises, searchTerm, selectedBodyPart, currentPage, limit])
+        exercise.name?.toLowerCase().includes(lowerSearch) ||
+        exercise.target?.toLowerCase().includes(lowerSearch) ||
+        exercise.bodyPart?.toLowerCase().includes(lowerSearch) ||
+        exercise.equipment?.toString().toLowerCase().includes(lowerSearch) ||
+        exercise.instructions?.some(instr =>
+          instr.toLowerCase().includes(lowerSearch)
+        );
+
+      const matchesBodyPart = !selectedBodyPart || exercise.bodyPart === selectedBodyPart;
+
+      return matchesSearch && matchesBodyPart;
+    });
+
+    return filtered;
+  }, [exercises, searchTerm, selectedBodyPart, currentPage, limit]);
 
   if (loading) {
     return (
@@ -378,7 +389,7 @@ export default function WorkoutsPage() {
         </div>
 
         {/* No Results Message */}
-        {filteredExercises.length === 0 && !loading && (
+        {totalPages === 0 && !loading && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No exercises found</h3>
@@ -460,7 +471,7 @@ export default function WorkoutsPage() {
 
         {/* Results Info */}
         <div className="text-center mt-8 mb-4 text-gray-600">
-          <p>Showing {exercises.length} exercises</p>
+          <p>Showing {Math.min(((currentPage + 1) * limit), totalExercises)} exercises</p>
           {selectedBodyPart && (
             <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedBodyPart}</span></p>
           )}

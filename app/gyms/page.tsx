@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { Heart, MessageSquare, X, Clock, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MessageSquare, X, Clock, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
 declare global {
@@ -15,6 +15,7 @@ type Gym = {
   place_id: string;
   name: string;
   formatted_address?: string;
+  formatted_phone_number?: string;
   rating: number;
   photos: any[];
   geometry: {
@@ -38,6 +39,7 @@ interface FavoriteGym {
   gymId: string;
   gymName: string;
   address: string;
+  phoneNumber: string;
   rating: number;
   photoUrl: string;
   comment: string;
@@ -46,44 +48,25 @@ interface FavoriteGym {
 }
 
 // Malaysian states with All option at the start
-const MALAYSIAN_STATES = [
-  { value: 'All', label: 'All' },
-  { value: 'Johor', label: 'Johor' },
-  { value: 'Kedah', label: 'Kedah' },
-  { value: 'Kelantan', label: 'Kelantan' },
-  { value: 'Kuala Lumpur', label: 'Kuala Lumpur' },
-  { value: 'Labuan', label: 'Labuan' },
-  { value: 'Melaka', label: 'Melaka' },
-  { value: 'Negeri Sembilan', label: 'Negeri Sembilan' },
-  { value: 'Pahang', label: 'Pahang' },
-  { value: 'Penang', label: 'Penang' },
-  { value: 'Perak', label: 'Perak' },
-  { value: 'Perlis', label: 'Perlis' },
-  { value: 'Putrajaya', label: 'Putrajaya' },
-  { value: 'Sabah', label: 'Sabah' },
-  { value: 'Sarawak', label: 'Sarawak' },
-  { value: 'Selangor', label: 'Selangor' },
-  { value: 'Terengganu', label: 'Terengganu' }
+const malaysian_states = [
+  'All',
+  'Johor',
+  'Kedah',
+  'Kelantan',
+  'Kuala Lumpur',
+  'Labuan',
+  'Melaka',
+  'Negeri Sembilan',
+  'Pahang',
+  'Penang',
+  'Perak',
+  'Perlis',
+  'Putrajaya',
+  'Sabah',
+  'Sarawak',
+  'Selangor',
+  'Terengganu'
 ];
-
-const STATE_ALIASES: Record<string, string[]> = {
-  'johor': ['johor', 'johor darul taʼzim'],
-  'kedah': ['kedah', 'kedah darul aman'],
-  'kelantan': ['kelantan', 'kelantan darul naim'],
-  'melaka': ['melaka', 'malacca'],
-  'negeri sembilan': ['negeri sembilan'],
-  'pahang': ['pahang', 'pahang darul makmur'],
-  'penang': ['penang', 'pulau pinang'],
-  'perak': ['perak', 'perak darul ridzuan'],
-  'perlis': ['perlis', 'perlis indera kayangan'],
-  'sabah': ['sabah'],
-  'sarawak': ['sarawak'],
-  'selangor': ['selangor', 'selangor darul ehsan'],
-  'terengganu': ['terengganu', 'terengganu darul iman'],
-  'kuala lumpur': ['kuala lumpur', 'kl', 'wilayah persekutuan kuala lumpur', 'wilayah persekutuan'],
-  'putrajaya': ['putrajaya', 'wilayah persekutuan putrajaya'],
-  'labuan': ['labuan', 'wilayah persekutuan labuan'],
-};
 
 export default function GymsPage() {
   const { user, isLoaded } = useUser();
@@ -97,6 +80,8 @@ export default function GymsPage() {
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalGyms, setTotalGyms] = useState(0);
   const [gymsPerPage] = useState(12);
 
   // Modal states
@@ -265,6 +250,7 @@ export default function GymsPage() {
           place_id: selectedGym.place_id,
           name: selectedGym.name,
           formatted_address: selectedGym.formatted_address,
+          formatted_phone_number: selectedGym.formatted_phone_number,
           rating: selectedGym.rating,
           photoUrl
         },
@@ -399,47 +385,54 @@ export default function GymsPage() {
     return false; // No photos and no valid coordinates
   };
 
-  // Search gyms by state and term
-  const searchGyms = (state: string, term: string) => {
+  // Search gyms by state
+  const searchGyms = (state: string) => {
     setLoading(true);
     setError('');
     setGyms([]);
     setCurrentPage(0); // Reset UI pagination
     
     const allGyms: Gym[] = [];
-    const processedPlaceIds = new Set<string>(); // Track processed place_ids to avoid duplicates
-    
+    const seenPlaceIds = new Set<string>();
+
     const initMapAndSearch = () => {
       const dummyMap = document.createElement('div');
       const map = new window.google.maps.Map(dummyMap);
       const service = new window.google.maps.places.PlacesService(map);
 
-      const locationQuery = state === 'All' ? 'Malaysia' : `${state}, Malaysia`;
-      const query = term ? `gym ${term} in ${locationQuery}` : `gym in ${locationQuery}`;
-      const request = { query, type: 'gym' };
+      const query = state === 'All' ? 'gym in Malaysia' : `gym in ${state}, Malaysia`;
+      const request = {
+        query,
+        type: 'gym',
+      };
 
       const fetchResults = (results: any[], status: string, pagination?: any) => {
         if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results) {
+          const locationText = state === 'All' ? 'Malaysia' : state;
+          setError(`Failed to fetch gyms in ${locationText}`);
           setLoading(false);
           return;
         }
 
         let processed = 0;
-        
+
         results.forEach((gym) => {
-          if (!gym.place_id || processedPlaceIds.has(gym.place_id)) {
+          if (!gym.place_id) {
+            console.warn('Gym missing place_id in initial results:', gym);
             processed++;
             if (processed === results.length) {
-              if (pagination?.hasNextPage) {
+              if (pagination && pagination.hasNextPage) {
                 setTimeout(() => pagination.nextPage(), 2000);
               } else {
-                finaliseResults(allGyms, state);
+                allGyms.sort((a, b) =>
+                  a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+                );
+                setGyms(allGyms);
+                setLoading(false);
               }
             }
             return;
           }
-
-          processedPlaceIds.add(gym.place_id);
 
           service.getDetails(
             {
@@ -448,38 +441,56 @@ export default function GymsPage() {
                 'place_id',
                 'name',
                 'formatted_address',
+                'formatted_phone_number',
                 'rating',
                 'photos',
                 'geometry',
-                'opening_hours'
+                'opening_hours',
               ],
             },
             async (placeDetails: Gym | null, statusDetails: string) => {
-              try {
-                processed++;
+              processed++;
 
-                if (
-                  statusDetails === window.google.maps.places.PlacesServiceStatus.OK &&
-                  placeDetails &&
-                  placeDetails.place_id && // Ensure place_id exists
-                  placeDetails.opening_hours // Only include if opening hours exist
-                ) {
-                  const hasImagery = await hasValidImagery(placeDetails);
-                  
-                  if (hasImagery) {
-                    if (!placeDetails.place_id) placeDetails.place_id = gym.place_id;
-                    allGyms.push(placeDetails);
-                  }
+              if (
+                statusDetails === window.google.maps.places.PlacesServiceStatus.OK &&
+                placeDetails &&
+                placeDetails.place_id &&
+                placeDetails.opening_hours
+              ) {
+                if (!placeDetails.place_id) {
+                  placeDetails.place_id = gym.place_id;
                 }
-              } catch (error) {
-                console.error(`Error processing gym ${placeDetails?.name}:`, error);
+
+                // Check uniqueness and imagery
+                const isUnique = !seenPlaceIds.has(placeDetails.place_id);
+                const validImagery = await hasValidImagery(placeDetails);
+
+                if (isUnique && validImagery) {
+                  seenPlaceIds.add(placeDetails.place_id);
+                  allGyms.push(placeDetails);
+                }
+              } else {
+                console.warn('Gym details missing or invalid:', {
+                  statusDetails,
+                  placeDetails: placeDetails
+                    ? {
+                        name: placeDetails.name,
+                        place_id: placeDetails.place_id,
+                        hasOpeningHours: !!placeDetails.opening_hours,
+                      }
+                    : null,
+                });
               }
 
               if (processed === results.length) {
-                if (pagination?.hasNextPage) {
+                if (pagination && pagination.hasNextPage) {
                   setTimeout(() => pagination.nextPage(), 2000);
                 } else {
-                  finaliseResults(allGyms, state);
+                  allGyms.sort((a, b) =>
+                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+                  );
+                  setGyms(allGyms);
+                  setLoading(false);
                 }
               }
             }
@@ -488,52 +499,6 @@ export default function GymsPage() {
       };
 
       service.textSearch(request, fetchResults);
-    };
-
-    const finaliseResults = (gyms: Gym[], selectedState: string) => {
-      const lowerTerm = term.trim().toLowerCase();
-      const includesOpen = lowerTerm.includes('open');
-      const includesClosed = lowerTerm.includes('closed');
-      const includes24Hours = lowerTerm.includes('24 hour') || lowerTerm.includes('24 hours');
-
-      const addressMatchesState = (address: string | undefined): boolean => {
-        if (selectedState === 'All') return true;
-        if (!address) return false;
-
-        const lowerAddress = address.toLowerCase();
-        const aliases = STATE_ALIASES[selectedState.toLowerCase()] || [selectedState.toLowerCase()];
-        return aliases.some(alias => lowerAddress.includes(alias));
-      };
-
-      const nameOrAddressMatchesTerm = (gym: Gym): boolean => {
-        if (!lowerTerm || includesOpen || includesClosed || includes24Hours) return true;
-        return (
-          (gym.name?.toLowerCase().includes(lowerTerm) ?? false) ||
-          (gym.formatted_address?.toLowerCase().includes(lowerTerm) ?? false)
-        );
-      };
-
-      const filtered = gyms.filter(gym => {
-        const matchesState = addressMatchesState(gym.formatted_address);
-        const matchesNameOrAddress = nameOrAddressMatchesTerm(gym);
-        const isOpenNow = isGymOpen(gym.opening_hours);
-        const is24H = gym.opening_hours?.weekday_text?.some(t =>
-          t.toLowerCase().includes('open 24 hours')
-        ) ?? false;
-
-        if (includesOpen && !isOpenNow) return false;
-        if (includesClosed && isOpenNow) return false;
-        if (includes24Hours && !is24H) return false;
-
-        return matchesState && matchesNameOrAddress;
-      });
-
-      filtered.sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-      );
-
-      setGyms(filtered);
-      setLoading(false);
     };
 
     if (!window.google || !window.google.maps) {
@@ -552,23 +517,21 @@ export default function GymsPage() {
   };
 
   // Handle state change
-  const handleStateChange = (state: string, term: string) => {
+  const handleStateChange = (state: string) => {
     setSelectedState(state);
     setCurrentPage(0); // Reset to first page when changing state
-    searchGyms(state, term);
+    searchGyms(state);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Pagination calculations
   const indexOfLastGym = (currentPage + 1) * gymsPerPage;
   const indexOfFirstGym = currentPage * gymsPerPage;
-  const currentGyms = gyms.slice(indexOfFirstGym, indexOfLastGym);
-  const totalPages = Math.ceil(gyms.length / gymsPerPage);
 
   // Handle search
   const handleSearch = (term: string) => {
+    setSearchTerm(term)
     setCurrentPage(0)
-    searchGyms(selectedState, term)
   };
 
   // Handle pagination
@@ -603,7 +566,7 @@ export default function GymsPage() {
   };
 
   useEffect(() => {
-    searchGyms(selectedState, searchTerm);
+    searchGyms(selectedState);
   }, []);
 
   useEffect(() => {
@@ -616,6 +579,44 @@ export default function GymsPage() {
     // Reset to first page when gyms change
     setCurrentPage(0);
   }, [gyms]);
+
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      setTotalPages(Math.ceil(filteredGyms.filtered.length / gymsPerPage));
+      setTotalGyms(filteredGyms.filtered.length);
+    }
+    else {
+      setTotalPages(Math.ceil(gyms.length / gymsPerPage));
+      setTotalGyms(gyms.length);
+    }
+  });
+
+  const filteredGyms = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    
+    const filtered = gyms.filter(gym => {
+      const hoursInfo = formatOpeningHours(gym.opening_hours);
+
+      const matchesSearch =
+        !searchTerm ||
+        gym.name.toLowerCase().includes(lowerSearch) ||
+        gym.formatted_address?.toLowerCase().includes(lowerSearch) ||
+        gym.formatted_phone_number?.toLowerCase().includes(lowerSearch) ||
+        gym.rating?.toString().includes(lowerSearch) ||
+        gym.opening_hours?.toString().includes(lowerSearch) ||
+        hoursInfo?.todayHours.toString().includes(lowerSearch)
+
+      const matchesState = !selectedState || malaysian_states?.includes(selectedState);
+
+      return matchesSearch && matchesState;
+    });
+
+    const startIndex = currentPage * gymsPerPage;
+    const endIndex = startIndex + gymsPerPage;
+    const pageFiltered = filtered.slice(startIndex, endIndex);
+
+    return { filtered, pageFiltered };
+  }, [gyms, searchTerm, selectedState, currentPage, gymsPerPage]);
 
   if (loading) {
     return (
@@ -636,7 +637,7 @@ export default function GymsPage() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => searchGyms(selectedState, searchTerm)}
+            onClick={() => searchGyms(selectedState)}
             className="bg-cyan-600 text-white px-6 py-2 rounded-lg hover:bg-cyan-700 transition-colors"
           >
             Try Again
@@ -664,13 +665,8 @@ export default function GymsPage() {
               <input
                 type="text"
                 placeholder="Search gyms..."
-                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)} // still track input
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch(searchTerm); // trigger search
-                  }
-                }}
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               />
             </div>
@@ -689,31 +685,29 @@ export default function GymsPage() {
           </div>
 
           {/* State Filter Section */}
-            {showFilters && (
-              <div className="mb-8">
-                <div className="flex flex-wrap gap-2">
-                  {MALAYSIAN_STATES.map((state) => (
-                    <button
-                      key={state.value}
-                      onClick={() => handleStateChange(state.value, searchTerm)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        selectedState === state.value
-                          ? 'bg-cyan-500 text-white'
-                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      {state.label}
-                    </button>
-                  ))}
-                </div>
+          {showFilters && (
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-2">
+                {malaysian_states.map((state) => (
+                  <button
+                    key={state}
+                    onClick={() => handleStateChange(state)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selectedState === state
+                        ? 'bg-cyan-500 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {state}
+                  </button>
+                ))}
               </div>
-            )}
-          </div>
-
-        
-
+            </div>
+          )}
+        </div>
+          
         {/* Error or No Results */}
-        {gyms.length === 0 && (
+        {totalPages === 0 && !loading && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No gyms found</h3>
@@ -724,7 +718,7 @@ export default function GymsPage() {
               onClick={() => {
                 setSelectedState('All');
                 setSearchTerm('');
-                searchGyms('All', '');
+                searchGyms('All');
               }}
               className="text-cyan-600 hover:text-cyan-700 font-medium"
             >
@@ -735,7 +729,7 @@ export default function GymsPage() {
 
         {/* Gyms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {currentGyms.map((gym, idx) => {
+          {filteredGyms.pageFiltered.map((gym, idx) => {
             let photoUrl = '';
 
             if (gym.photos && gym.photos.length > 0) {
@@ -781,13 +775,16 @@ export default function GymsPage() {
                 </div>
 
                 <div className="p-4 border-t-2 border-cyan-300 flex-1 flex flex-col">
-                  <h3 className="font-bold text-lg lg:text-xl text-gray-800 mb-2">
+                  <h3 className="font-bold text-lg text-gray-800 mb-3 line-clamp-2">
                     {gym.name}
                   </h3>
-                  <div className="space-y-1 text-sm text-gray-600 mb-3">
-                    <p><span className="font-medium">Address:</span> {gym.formatted_address || 'Address not available'}</p>
+                  <div className="space-y-1 text-sm text-gray-600 mb-5">
+                    <p><span className="font-medium"></span> {gym.formatted_address || 'Address not available'}</p>
+                    <p className="text-gray-600 font-medium">
+                      {gym.formatted_phone_number ? `☎ ${gym.formatted_phone_number}` : 'No phone number'}
+                    </p>
                     <p className="text-yellow-600 font-medium">
-                      {gym.rating ? `⭐ ${gym.rating.toFixed(1)}` : 'No reviews'}
+                      {gym.rating ? `★ ${gym.rating.toFixed(1)}` : 'No reviews'}
                     </p>
                     {/* Opening Hours with integrated Open/Closed status */}
                     <div>
@@ -869,7 +866,7 @@ export default function GymsPage() {
         {/* Results Info */}
         <div className="text-center mt-8 mb-4 text-gray-600">
           <p>
-            Showing {indexOfFirstGym + 1}-{Math.min(indexOfLastGym, gyms.length)} of {gyms.length} gyms in {selectedState === 'All' ? 'Malaysia' : selectedState}
+            Showing {indexOfFirstGym + 1}-{Math.min(indexOfLastGym, totalGyms)} of {totalGyms} gyms in {selectedState === 'All' ? 'Malaysia' : selectedState}
           </p>
         </div>
       </div>
