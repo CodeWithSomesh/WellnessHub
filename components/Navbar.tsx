@@ -15,13 +15,13 @@ const Navbar = () => {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="w-full border-b border-primary/20 top-0 z-100">
+    <nav className="w-full border-b border-primary/20 top-0">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/">
-              <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Wellness Hub
               </h1>
             </Link>
@@ -34,14 +34,14 @@ const Navbar = () => {
                 { href: '/workouts', label: 'Workouts', bg: 'bg-[#D433F8]' },
                 { href: '/classicRecipes', label: 'Classic Recipes', bg: 'bg-[#33d1f8]' },
                 { href: '/veganRecipes', label: 'Vegan Recipes', bg: 'bg-[#f83333]' },
-                { href: '/quotes', label: 'Quotes', bg: 'bg-[#33f875]' },
+                { href: '/gyms', label: 'Gyms', bg: 'bg-[#33f875]' },
               ].map(({ href, label, bg }) => (
                 <a
                   key={href}
                   href={href}
                   className={`${
                     isActive(href) ? `${bg} text-white font-bold underline italic` : 'text-foreground font-medium'
-                  } hover:text-primary hover:bg-primary/10 transition-all duration-200 px-3 py-2 rounded-md text-sm`}
+                  } hover:text-primary hover:bg-primary/10 transition-all duration-200 px-3 py-2 rounded-md text-md`}
                 >
                   {label}
                 </a>

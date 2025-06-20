@@ -7,7 +7,7 @@ export default function Home() {
       <div className="max-w-6xl mx-auto text-center">
         {/* Main Hero Content */}
         <div className="mb-16">
-          <h1 className="text-6xl md:text-8xl font-black text-gray-900 mb-6 leading-tight">
+          <h1 className="text-6xl md:text-8xl font-black text-gray-900 my-6 leading-tight">
             Your Complete
             <span className="block text-cyan-400 stroke-text">Wellness Hub</span>
           </h1>
