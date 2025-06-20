@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Heart, MessageSquare, X, Clock, Users, ChefHat } from 'lucide-react'
+import { Heart, MessageSquare, X, Clock, Users, ChefHat, Search, Filter } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 
 // Define the recipe type based on Tasty API response
@@ -75,6 +75,8 @@ export default function RecipesPage() {
   const [selectedTag, setSelectedTag] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
   const [size] = useState(20) // Limit to 20 recipes per page
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [showFilters, setShowFilters] = useState(false)
 
   // Modal states
   const [showCommentModal, setShowCommentModal] = useState(false)
@@ -282,6 +284,11 @@ export default function RecipesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user])
 
+  const handleSearch = (term: string) => {
+    setSearchTerm(term)
+    setCurrentPage(0)
+  };
+
   const handleTagChange = (tag: string) => {
     setSelectedTag(tag)
     setCurrentPage(0) // Reset to first page
@@ -310,6 +317,32 @@ export default function RecipesPage() {
     const firstSection = recipe.sections[0]
     return firstSection.components?.slice(0, 3).map(comp => comp.ingredient.name) || []
   }
+
+  const filteredRecipes = useMemo(() => {
+    const filtered = recipes.filter(recipe => {
+      const ingredients = getMainIngredients(recipe);
+      const matchesSearch = !searchTerm ||
+      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      recipe.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      recipe.total_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
+      recipe.prep_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
+      recipe.tags?.toString().includes(searchTerm.toLowerCase()) ||
+      ingredients?.some(ingredient =>
+        ingredient.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      const matchesTag = !selectedTag || recipeTags?.includes(selectedTag)
+      
+      return matchesSearch && matchesTag
+    })
+    
+    setCurrentPage(0)
+    
+    // Apply pagination to filtered results
+    const startIndex = currentPage * size
+    const endIndex = startIndex + size
+    return filtered.slice(startIndex, endIndex)
+  }, [recipes, searchTerm, selectedTag, currentPage, size])
 
   if (loading) {
     return (
@@ -349,39 +382,69 @@ export default function RecipesPage() {
           <p className="text-gray-600 text-lg">Discover amazing recipes for every occasion</p>
         </div>
 
-        {/* Filter Section */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Filter by Category:</h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handleTagChange('')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedTag === ''
-                  ? 'bg-[#D433F8] text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              All Recipes
-            </button>
-            {recipeTags.map((tag) => (
+        {/* Search and Filter Section */}
+          <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
+            {/* Search Bar */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search recipes, ingredients, or descriptions..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+  
+            {/* Filter Toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
               <button
-                key={tag}
-                onClick={() => handleTagChange(tag)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                  selectedTag === tag
-                    ? 'bg-[#D433F8] text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2 text-orange-600 hover:text-orange-700"
               >
-                {tag.replace(/_/g, ' ')}
+                <Filter size={18} />
+                <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
               </button>
-            ))}
-          </div>
+            </div>
+
+          {/* Filter Section */}
+          {showFilters && (
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleTagChange('')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedTag === ''
+                      ? 'bg-[#D433F8] text-white'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  All Recipes
+                </button>
+                {recipeTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => handleTagChange(tag)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
+                      selectedTag === tag
+                        ? 'bg-[#D433F8] text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {tag.replace(/_/g, ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recipes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {recipes.map((recipe) => (
+          {filteredRecipes.map((recipe) => (
             <div key={recipe.id} className="bg-orange-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
               {/* Heart Icon */}
               <button
