@@ -14,6 +14,15 @@ export default function Home() {
             Discover amazing workouts, delicious recipes, and inspiring quotes all in one place. 
             Create your personalized wellness journey today!
           </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button className="bg-cyan-400 hover:bg-cyan-500 text-black font-bold px-8 py-4 text-lg border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
+              Start Exploring
+            </Button>
+            <Button variant="outline" className="border-4 border-black bg-white hover:bg-gray-100 text-black font-bold px-8 py-4 text-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
+              View Favorites
+            </Button>
+          </div>
         </div>
       </div>
     </div>
