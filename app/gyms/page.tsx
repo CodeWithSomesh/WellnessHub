@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -385,13 +386,13 @@ export default function GymsPage() {
     return false; // No photos and no valid coordinates
   };
 
-  // Search gyms by state
+    // Search gyms by state
   const searchGyms = (state: string) => {
     setLoading(true);
     setError('');
     setGyms([]);
     setCurrentPage(0); // Reset UI pagination
-    
+
     const allGyms: Gym[] = [];
     const seenPlaceIds = new Set<string>();
 
@@ -434,85 +435,118 @@ export default function GymsPage() {
             return;
           }
 
-          service.getDetails(
-            {
-              placeId: gym.place_id,
-              fields: [
-                'place_id',
-                'name',
-                'formatted_address',
-                'formatted_phone_number',
-                'rating',
-                'photos',
-                'geometry',
-                'opening_hours',
-              ],
-            },
-            async (placeDetails: Gym | null, statusDetails: string) => {
-              processed++;
+          try {
+            service.getDetails(
+              {
+                placeId: gym.place_id,
+                fields: [
+                  'place_id',
+                  'name',
+                  'formatted_address',
+                  'formatted_phone_number',
+                  'rating',
+                  'photos',
+                  'geometry',
+                  'opening_hours',
+                ],
+              },
+              async (placeDetails: Gym | null, statusDetails: string) => {
+                processed++;
 
-              if (
-                statusDetails === window.google.maps.places.PlacesServiceStatus.OK &&
-                placeDetails &&
-                placeDetails.place_id &&
-                placeDetails.opening_hours
-              ) {
-                if (!placeDetails.place_id) {
-                  placeDetails.place_id = gym.place_id;
-                }
+                if (
+                  statusDetails === window.google.maps.places.PlacesServiceStatus.OK &&
+                  placeDetails &&
+                  placeDetails.place_id &&
+                  placeDetails.opening_hours
+                ) {
+                  if (!placeDetails.place_id) {
+                    placeDetails.place_id = gym.place_id;
+                  }
 
-                // Check uniqueness and imagery
-                const isUnique = !seenPlaceIds.has(placeDetails.place_id);
-                const validImagery = await hasValidImagery(placeDetails);
+                  const isUnique = !seenPlaceIds.has(placeDetails.place_id);
+                  const validImagery = await hasValidImagery(placeDetails);
 
-                if (isUnique && validImagery) {
-                  seenPlaceIds.add(placeDetails.place_id);
-                  allGyms.push(placeDetails);
-                }
-              } else {
-                console.warn('Gym details missing or invalid:', {
-                  statusDetails,
-                  placeDetails: placeDetails
-                    ? {
-                        name: placeDetails.name,
-                        place_id: placeDetails.place_id,
-                        hasOpeningHours: !!placeDetails.opening_hours,
-                      }
-                    : null,
-                });
-              }
-
-              if (processed === results.length) {
-                if (pagination && pagination.hasNextPage) {
-                  setTimeout(() => pagination.nextPage(), 2000);
+                  if (isUnique && validImagery) {
+                    seenPlaceIds.add(placeDetails.place_id);
+                    allGyms.push(placeDetails);
+                  }
                 } else {
-                  allGyms.sort((a, b) =>
-                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-                  );
-                  setGyms(allGyms);
-                  setLoading(false);
+                  console.warn('Gym details missing or invalid:', {
+                    statusDetails,
+                    placeDetails: placeDetails
+                      ? {
+                          name: placeDetails.name,
+                          place_id: placeDetails.place_id,
+                          hasOpeningHours: !!placeDetails.opening_hours,
+                        }
+                      : null,
+                  });
+                }
+
+                if (processed === results.length) {
+                  if (pagination && pagination.hasNextPage) {
+                    setTimeout(() => pagination.nextPage(), 2000);
+                  } else {
+                    allGyms.sort((a, b) =>
+                      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+                    );
+                    setGyms(allGyms);
+                    setLoading(false);
+                  }
                 }
               }
+            );
+          } catch (error: any) {
+            console.error('Error fetching gym details:', error);
+            const locationText = state === 'All' ? 'Malaysia' : state;
+
+            if (error.response?.status === 429) {
+              setError('Too many requests. Please try again in a moment.');
+            } else if (error.response?.status >= 500) {
+              setError('Server error. Please try again later.');
+            } else if (error.code === 'NETWORK_ERROR') {
+              setError('Network error. Please check your connection.');
+            } else {
+              setError(`Failed to fetch gyms in ${locationText}. Please try again.`);
             }
-          );
+
+            setLoading(false);
+          }
         });
       };
 
       service.textSearch(request, fetchResults);
     };
 
-    if (!window.google || !window.google.maps) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-      script.async = true;
-      script.onload = initMapAndSearch;
-      script.onerror = () => {
-        setError('Failed to load Google Maps script');
-        setLoading(false);
-      };
-      document.head.appendChild(script);
-    } else {
-      initMapAndSearch();
+    try {
+      if (!window.google || !window.google.maps) {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+        script.async = true;
+        script.onload = initMapAndSearch;
+        script.onerror = () => {
+          setError('Failed to load Google Maps script');
+          setLoading(false);
+        };
+        document.head.appendChild(script);
+      } else {
+        initMapAndSearch();
+      }
+    } catch (error: any) {
+      console.error('Error initializing Google Maps:', error);
+      const locationText = state === 'All' ? 'Malaysia' : state;
+
+      if (error.response?.status === 429) {
+        setError('Too many requests. Please try again in a moment.');
+      } else if (error.response?.status >= 500) {
+        setError('Server error. Please try again later.');
+      } else if (error.code === 'NETWORK_ERROR') {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError(`Failed to search gyms in ${locationText}.`);
+      }
+
+      setLoading(false);
     }
   };
 
@@ -603,7 +637,6 @@ export default function GymsPage() {
         gym.formatted_address?.toLowerCase().includes(lowerSearch) ||
         gym.formatted_phone_number?.toLowerCase().includes(lowerSearch) ||
         gym.rating?.toString().includes(lowerSearch) ||
-        gym.opening_hours?.toString().includes(lowerSearch) ||
         hoursInfo?.todayHours.toString().includes(lowerSearch)
 
       const matchesState = !selectedState || malaysian_states?.includes(selectedState);
