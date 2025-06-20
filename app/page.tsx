@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Star, Coffee, Dumbbell } from "lucide-react";
+import { Heart, Coffee, Dumbbell, MapPin } from "lucide-react";
 
 export default function Home() {
   return (
     <div className="bg-gradient-to-br from-cyan-50 to-yellow-50 flex items-center justify-center px-4">
-      <div className="max-w-6xl mx-auto text-center">
+      <div className="max-w-7xl mx-auto text-center">
         {/* Main Hero Content */}
         <div className="mb-16">
           <h1 className="text-6xl md:text-8xl font-black text-gray-900 my-6 leading-tight">
@@ -12,8 +12,7 @@ export default function Home() {
             <span className="block text-cyan-400 stroke-text">Wellness Hub</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto font-medium">
-            Discover amazing workouts, delicious recipes, and inspiring quotes all in one place. 
-            Create your personalized wellness journey today!
+          Discover amazing workouts, delicious recipes, and nearby gyms all in one place. Create your personalized wellness journey today!
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -27,8 +26,8 @@ export default function Home() {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+        <div className="grid md:grid-cols-2 gap-5">
+          <div className="bg-white rounded-md border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
             <div className="w-16 h-16 bg-pink-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
               <Dumbbell className="w-8 h-8 text-black" />
             </div>
@@ -36,7 +35,7 @@ export default function Home() {
             <p className="text-gray-600 font-medium">Find perfect exercises for every fitness level</p>
           </div>
 
-          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+          <div className="bg-white rounded-md border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
             <div className="w-16 h-16 bg-yellow-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
               <Coffee className="w-8 h-8 text-black" />
             </div>
@@ -44,15 +43,15 @@ export default function Home() {
             <p className="text-gray-600 font-medium">Delicious & healthy meals for every occasion</p>
           </div>
 
-          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+          <div className="bg-white rounded-md border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
             <div className="w-16 h-16 bg-green-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
-              <Star className="w-8 h-8 text-black" />
+              <MapPin className="w-8 h-8 text-black" />
             </div>
-            <h3 className="text-xl font-black text-gray-900 mb-2">Quotes</h3>
-            <p className="text-gray-600 font-medium">Daily motivation to keep you inspired</p>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Gyms</h3>
+            <p className="text-gray-600 font-medium">Discover gyms and fitness centers in Malaysia near you</p>
           </div>
 
-          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+          <div className="bg-white rounded-md border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
             <div className="w-16 h-16 bg-purple-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
               <Heart className="w-8 h-8 text-black" />
             </div>

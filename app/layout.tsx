@@ -35,9 +35,11 @@ export default function RootLayout({
       <html lang="en">
         <body className={inter.className}>
           <div className="mx-auto">
-            <div className="flex flex-col h-screen">
+            <div className="flex flex-col min-h-screen">
               <Navbar />
-              {children}
+              <main className="flex-1">
+                {children}
+              </main>
               <Footer />
             </div>
           </div>
