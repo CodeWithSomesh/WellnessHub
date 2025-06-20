@@ -377,6 +377,26 @@ export default function WorkoutsPage() {
           )}
         </div>
 
+        {/* No Results Message */}
+        {filteredExercises.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No exercises found</h3>
+            <p className="text-gray-600 mb-4">
+              Try adjusting your search terms or filters
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setSelectedBodyPart('')
+              }}
+              className="text-[#D433F8] hover:text-[#D433F8] font-medium"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
+
         {/* Exercises Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {filteredExercises.map((exercise) => (
