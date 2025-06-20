@@ -357,7 +357,7 @@ export default function RecipesPage() {
               onClick={() => handleTagChange('')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedTag === ''
-                  ? 'bg-[#D433F8] text-white'
+                  ? 'bg-[#3DD1F8] text-white'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -369,7 +369,7 @@ export default function RecipesPage() {
                 onClick={() => handleTagChange(tag)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
                   selectedTag === tag
-                    ? 'bg-[#D433F8] text-white'
+                    ? 'bg-[#3DD1F8] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -382,7 +382,7 @@ export default function RecipesPage() {
         {/* Recipes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {recipes.map((recipe) => (
-            <div key={recipe.id} className="bg-orange-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
+            <div key={recipe.id} className="bg-orange-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#3DD1F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#3DD1F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
               {/* Heart Icon */}
               <button
                 onClick={() => handleHeartClick(recipe)}
@@ -414,7 +414,8 @@ export default function RecipesPage() {
                 )}
               </div>
               
-              <div className="p-4 border-t-2 border-orange-300">
+              {/* making design changes */}
+              <div className="p-4 border-t-2 border-gray-600">
                 <h3 className="font-bold text-lg text-gray-800 mb-3 line-clamp-2">
                   {recipe.name}
                 </h3>
@@ -577,7 +578,7 @@ export default function RecipesPage() {
                   <button
                     onClick={updateFavoriteComment}
                     disabled={isUpdating}
-                    className="flex-1 bg-[#D433F8] text-white py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-[#3DD1F8] text-white py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUpdating ? 'Updating...' : 'Update Note'}
                   </button>
