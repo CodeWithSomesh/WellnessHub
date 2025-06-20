@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Heart, MessageSquare, X, Clock, Users, ChefHat, Search, Filter } from 'lucide-react'
+import { Heart, MessageSquare, X, Clock, Users, ChefHat } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 
 // Define the recipe type based on Tasty API response
@@ -74,11 +74,7 @@ export default function RecipesPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedTag, setSelectedTag] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalRecipes, setTotalRecipes] = useState(0);
   const [size] = useState(20) // Limit to 20 recipes per page
-  const [searchTerm, setSearchTerm] = useState<string>('')
-  const [showFilters, setShowFilters] = useState(false)
 
   // Modal states
   const [showCommentModal, setShowCommentModal] = useState(false)
@@ -87,11 +83,6 @@ export default function RecipesPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [editingFavorite, setEditingFavorite] = useState<FavoriteRecipe | null>(null)
 
-  // // Share states
-  // const [showShareModal, setShowShareModal] = useState(false)
-  // const [shareRecipe, setShareRecipe] = useState<Recipe | null>(null)
-  // const [copySuccess, setCopySuccess] = useState(false)
-  
   // Fetch recipes from the API
   const fetchRecipes = async (from = 0, tagFilter = '') => {
     setLoading(true)
@@ -185,82 +176,6 @@ export default function RecipesPage() {
       setShowCommentModal(true)
     }
   }
-
-  // Handle share click
-  // const handleShareClick = (recipe: Recipe) => {
-  //   setShareRecipe(recipe)
-  //   setShowShareModal(true)
-  //   setCopySuccess(false)
-  // }
-
-  // Generate recipe share text
-  // const generateShareText = (recipe: Recipe) => {
-  //   const mainIngredients = getMainIngredients(recipe)
-  //   const time = formatTime(recipe.total_time_minutes || recipe.prep_time_minutes)
-    
-  //   let shareText = `🍳 Check out this delicious recipe: ${recipe.name}\n\n`
-    
-  //   if (recipe.description) {
-  //     shareText += `${recipe.description}\n\n`
-  //   }
-    
-  //   shareText += `⏱️ Time: ${time}\n`
-    
-  //   if (recipe.servings) {
-  //     shareText += `👥 Serves: ${recipe.servings}\n`
-  //   }
-    
-  //   if (mainIngredients.length > 0) {
-  //     shareText += `🥘 Main ingredients: ${mainIngredients.join(', ')}\n`
-  //   }
-    
-  //   shareText += `\n📱 Found on our recipe app!`
-    
-  //   return shareText
-  // }
-
-  // // Copy to clipboard
-  // const copyToClipboard = async (text: string) => {
-  //   try {
-  //     await navigator.clipboard.writeText(text)
-  //     setCopySuccess(true)
-  //     setTimeout(() => setCopySuccess(false), 2000)
-  //   } catch (err) {
-  //     console.error('Failed to copy text: ', err)
-  //     // Fallback for older browsers
-  //     const textArea = document.createElement('textarea')
-  //     textArea.value = text
-  //     document.body.appendChild(textArea)
-  //     textArea.focus()
-  //     textArea.select()
-  //     try {
-  //       document.execCommand('copy')
-  //       setCopySuccess(true)
-  //       setTimeout(() => setCopySuccess(false), 2000)
-  //     } catch (fallbackErr) {
-  //       console.error('Fallback copy failed: ', fallbackErr)
-  //     }
-  //     document.body.removeChild(textArea)
-  //   }
-  // }
-
-  // // Share via Web Share API (if supported)
-  // const shareViaWebAPI = async (recipe: Recipe) => {
-  //   if (navigator.share) {
-  //     try {
-  //       await navigator.share({
-  //         title: recipe.name,
-  //         text: generateShareText(recipe),
-  //         url: window.location.href
-  //       })
-  //     } catch (err) {
-  //       console.error('Error sharing:', err)
-  //     }
-  //   } else {
-  //     // Fallback to copy to clipboard
-  //     copyToClipboard(generateShareText(recipe))
-  //   }
-  // }
 
   // Add to favorites
   const addToFavorites = async () => {
@@ -367,22 +282,6 @@ export default function RecipesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user])
 
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      setTotalPages(Math.ceil(filteredRecipes.length / size));
-      setTotalRecipes(filteredRecipes.length);
-    }
-    else {
-      setTotalPages(Math.ceil(recipes.length / size));
-      setTotalRecipes(recipes.length);
-    }
-  });
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-    setCurrentPage(0)
-  };
-
   const handleTagChange = (tag: string) => {
     setSelectedTag(tag)
     setCurrentPage(0) // Reset to first page
@@ -411,27 +310,6 @@ export default function RecipesPage() {
     const firstSection = recipe.sections[0]
     return firstSection.components?.slice(0, 3).map(comp => comp.ingredient.name) || []
   }
-
-  const filteredRecipes = useMemo(() => {
-    const filtered = recipes.filter(recipe => {
-      const ingredients = getMainIngredients(recipe);
-      const matchesSearch = !searchTerm ||
-      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.total_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
-      recipe.prep_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
-      recipe.tags?.toString().includes(searchTerm.toLowerCase()) ||
-      ingredients?.some(ingredient =>
-        ingredient.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      
-      const matchesTag = !selectedTag || recipeTags?.includes(selectedTag)
-      
-      return matchesSearch && matchesTag
-    })
-    
-    return filtered
-  }, [recipes, searchTerm, selectedTag, currentPage, size])
 
   if (loading) {
     return (
@@ -471,93 +349,41 @@ export default function RecipesPage() {
           <p className="text-gray-600 text-lg">Discover amazing recipes for every occasion</p>
         </div>
 
-        {/* Search and Filter Section */}
-          <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
-            {/* Search Bar */}
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search recipes, ingredients, or descriptions..."
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-  
-            {/* Filter Toggle */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 text-orange-600 hover:text-orange-700"
-              >
-                <Filter size={18} />
-                <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
-              </button>
-            </div>
-
-          {/* Filter Section */}
-          {showFilters && (
-            <div className="mb-8">
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => handleTagChange('')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedTag === ''
-                      ? 'bg-[#D433F8] text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  All Recipes
-                </button>
-                {recipeTags.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagChange(tag)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                      selectedTag === tag
-                        ? 'bg-[#D433F8] text-white'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {tag.replace(/_/g, ' ')}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* No Results Message */}
-        {totalPages === 0 && !loading && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No recipes found</h3>
-            <p className="text-gray-600 mb-4">
-              Try adjusting your search terms or filters
-            </p>
+        {/* Filter Section */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Filter by Category:</h3>
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => {
-                setSearchTerm('')
-                setSelectedTag('')
-              }}
-              className="text-orange-600 hover:text-orange-700 font-medium"
+              onClick={() => handleTagChange('')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedTag === ''
+                  ? 'bg-[#D433F8] text-white'
+                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+              }`}
             >
-              Clear all filters
+              All Recipes
             </button>
+            {recipeTags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => handleTagChange(tag)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
+                  selectedTag === tag
+                    ? 'bg-[#D433F8] text-white'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {tag.replace(/_/g, ' ')}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Recipes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-
-          {filteredRecipes.map((recipe) => (
+          {recipes.map((recipe) => (
             <div key={recipe.id} className="bg-orange-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
-              
-                {/* Heart Icon */}
+              {/* Heart Icon */}
               <button
                 onClick={() => handleHeartClick(recipe)}
                 className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-sm transition-all ${
@@ -588,8 +414,7 @@ export default function RecipesPage() {
                 )}
               </div>
               
-              {/* making design changes */}
-              <div className="p-4 border-t-2 border-gray-600">
+              <div className="p-4 border-t-2 border-orange-300">
                 <h3 className="font-bold text-lg text-gray-800 mb-3 line-clamp-2">
                   {recipe.name}
                 </h3>
@@ -634,13 +459,13 @@ export default function RecipesPage() {
                       {recipe.tags.slice(0, 3).map((tag) => (
                         <span
                           key={tag.id}
-                          className="px-2 py-1 bg-blue-200 text-blue-800 text-xs rounded-full"
+                          className="px-2 py-1 bg-orange-200 text-orange-800 text-xs rounded-full"
                         >
                           {tag.name.replace(/_/g, ' ')}
                         </span>
                       ))}
                       {recipe.tags.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-300 text-gray-700 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
                           +{recipe.tags.length - 3} more
                         </span>
                       )}
@@ -666,7 +491,7 @@ export default function RecipesPage() {
 
         {/* Results Info */}
         <div className="text-center mt-8 mb-4 text-gray-600">
-          <p>Showing {Math.min(((currentPage + 1) * size), totalRecipes)} recipes</p>
+          <p>Showing {recipes.length} recipes</p>
           {selectedTag && (
             <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedTag.replace(/_/g, ' ')}</span></p>
           )}
@@ -680,7 +505,7 @@ export default function RecipesPage() {
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               currentPage === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
             }`}
           >
             <ChevronLeft />
@@ -690,7 +515,7 @@ export default function RecipesPage() {
           </span>
           <button
             onClick={handleNextPage}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors"
           >
             <ChevronRight />
           </button>
@@ -752,7 +577,7 @@ export default function RecipesPage() {
                   <button
                     onClick={updateFavoriteComment}
                     disabled={isUpdating}
-                    className="flex-1 bg-[#3DD1F8] text-white py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUpdating ? 'Updating...' : 'Update Note'}
                   </button>
@@ -768,7 +593,7 @@ export default function RecipesPage() {
                 <button
                   onClick={addToFavorites}
                   disabled={isUpdating}
-                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdating ? 'Adding...' : 'Add to Favorites'}
                 </button>
