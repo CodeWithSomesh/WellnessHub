@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Heart, MessageSquare, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Heart, MessageSquare, X, Search, Filter } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 
 // Define the exercise type
@@ -44,7 +43,11 @@ export default function WorkoutsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalExercises, setTotalExercises] = useState(0);
   const [limit] = useState(12) // Limit to 12 Exercises per page
+  const [searchTerm, setSearchTerm] = useState<string>('')
+  const [showFilters, setShowFilters] = useState(false)
 
   // Modal states
   const [showCommentModal, setShowCommentModal] = useState(false)
@@ -74,7 +77,7 @@ export default function WorkoutsPage() {
           offset: offset.toString()
         },
         headers: {
-          'x-rapidapi-key': '0ec4e2095amsh1c726e3df00bfa6p12aac3jsnecd514c6e9e6',
+          'x-rapidapi-key': '96158a4a19msh3fb595b7d64c176p14278ejsn27637bfd3c43',
           'x-rapidapi-host': 'exercisedb.p.rapidapi.com'
         }
       }
@@ -219,6 +222,11 @@ export default function WorkoutsPage() {
     }
   }
 
+  const handleSearch = (term: string) => {
+    setSearchTerm(term)
+    setCurrentPage(0)
+  };
+
   // Body parts for filtering
   const bodyParts = [
     'back', 'cardio', 'chest', 'lower arms', 'lower legs',
@@ -237,6 +245,17 @@ export default function WorkoutsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user])
 
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      setTotalPages(Math.ceil(filteredExercises.length / limit));
+      setTotalExercises(filteredExercises.length);
+    }
+    else {
+      setTotalPages(Math.ceil(exercises.length / limit));
+      setTotalExercises(exercises.length);
+    }
+  });
+
   const handleBodyPartChange = (bodyPart: string) => {
     setSelectedBodyPart(bodyPart)
     setCurrentPage(0) // Reset to first page
@@ -249,6 +268,27 @@ export default function WorkoutsPage() {
   const handlePrevPage = () => {
     setCurrentPage(prev => Math.max(0, prev - 1))
   }
+
+  const filteredExercises = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+
+    const filtered = exercises.filter(exercise => {
+      const matchesSearch = !searchTerm ||
+        exercise.name?.toLowerCase().includes(lowerSearch) ||
+        exercise.target?.toLowerCase().includes(lowerSearch) ||
+        exercise.bodyPart?.toLowerCase().includes(lowerSearch) ||
+        exercise.equipment?.toString().toLowerCase().includes(lowerSearch) ||
+        exercise.instructions?.some(instr =>
+          instr.toLowerCase().includes(lowerSearch)
+        );
+
+      const matchesBodyPart = !selectedBodyPart || exercise.bodyPart === selectedBodyPart;
+
+      return matchesSearch && matchesBodyPart;
+    });
+
+    return filtered;
+  }, [exercises, searchTerm, selectedBodyPart, currentPage, limit]);
 
   if (loading) {
     return (
@@ -288,39 +328,89 @@ export default function WorkoutsPage() {
           <p className="text-gray-600 text-lg">Discover and learn new exercises for your fitness journey</p>
         </div>
 
-        {/* Filter Section */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Filter by Body Part:</h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handleBodyPartChange('')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedBodyPart === ''
-                  ? 'bg-[#D433F8] text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              All
-            </button>
-            {bodyParts.map((bodyPart) => (
-              <button
-                key={bodyPart}
-                onClick={() => handleBodyPartChange(bodyPart)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                  selectedBodyPart === bodyPart
-                    ? 'bg-[#D433F8] text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {bodyPart}
-              </button>
-            ))}
+        {/* Search and Filter Section */}
+        <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search exercises, equipment, or instructions..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D433F8] focus:border-transparent"
+              />
+            </div>
           </div>
+
+          {/* Filter Toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2 text-[#D433F8] hover:text-[#D433F8]"
+            >
+              <Filter size={18} />
+              <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
+            </button>
+          </div>
+
+          {/* Filter Section */}
+          {showFilters && (
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleBodyPartChange('')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedBodyPart === ''
+                      ? 'bg-[#D433F8] text-white'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  All
+                </button>
+                {bodyParts.map((bodyPart) => (
+                  <button
+                    key={bodyPart}
+                    onClick={() => handleBodyPartChange(bodyPart)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
+                      selectedBodyPart === bodyPart
+                        ? 'bg-[#D433F8] text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {bodyPart}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* No Results Message */}
+        {totalPages === 0 && !loading && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No exercises found</h3>
+            <p className="text-gray-600 mb-4">
+              Try adjusting your search terms or filters
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('')
+                setSelectedBodyPart('')
+              }}
+              className="text-[#D433F8] hover:text-[#D433F8] font-medium"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
 
         {/* Exercises Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {exercises.map((exercise) => (
+          {filteredExercises.map((exercise) => (
             <div key={exercise.id} className="bg-yellow-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
               {/* Heart Icon */}
               <button
@@ -381,7 +471,7 @@ export default function WorkoutsPage() {
 
         {/* Results Info */}
         <div className="text-center mt-8 mb-4 text-gray-600">
-          <p>Showing {exercises.length} exercises</p>
+          <p>Showing {Math.min(((currentPage + 1) * limit), totalExercises)} exercises</p>
           {selectedBodyPart && (
             <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedBodyPart}</span></p>
           )}

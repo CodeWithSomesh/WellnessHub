@@ -84,7 +84,7 @@ const Navbar = () => {
                 { href: '/workouts', label: 'Workouts' },
                 { href: '/classicRecipes', label: 'Classic Recipes' },
                 { href: '/veganRecipes', label: 'Vegan Recipes' },
-                { href: '/quotes', label: 'Quotes' },
+                { href: '/gyms', label: 'Gyms' },
               ].map(({ href, label }) => (
                 <a
                   key={href}
