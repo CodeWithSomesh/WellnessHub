@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Heart, MessageSquare, X, Clock, Users, ChefHat } from 'lucide-react'
+import { Heart, MessageSquare, X, Clock, Users, ChefHat, Share2 } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 
 // Define the recipe type based on Tasty API response
@@ -83,6 +83,11 @@ export default function RecipesPage() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [editingFavorite, setEditingFavorite] = useState<FavoriteRecipe | null>(null)
 
+  // Share states
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareRecipe, setShareRecipe] = useState<Recipe | null>(null)
+  const [copySuccess, setCopySuccess] = useState(false)
+  
   // Fetch recipes from the API
   const fetchRecipes = async (from = 0, tagFilter = '') => {
     setLoading(true)
@@ -174,6 +179,82 @@ export default function RecipesPage() {
       setComment('')
       setSelectedRecipe(recipe)
       setShowCommentModal(true)
+    }
+  }
+
+  // Handle share click
+  const handleShareClick = (recipe: Recipe) => {
+    setShareRecipe(recipe)
+    setShowShareModal(true)
+    setCopySuccess(false)
+  }
+
+  // Generate recipe share text
+  const generateShareText = (recipe: Recipe) => {
+    const mainIngredients = getMainIngredients(recipe)
+    const time = formatTime(recipe.total_time_minutes || recipe.prep_time_minutes)
+    
+    let shareText = `🍳 Check out this delicious recipe: ${recipe.name}\n\n`
+    
+    if (recipe.description) {
+      shareText += `${recipe.description}\n\n`
+    }
+    
+    shareText += `⏱️ Time: ${time}\n`
+    
+    if (recipe.servings) {
+      shareText += `👥 Serves: ${recipe.servings}\n`
+    }
+    
+    if (mainIngredients.length > 0) {
+      shareText += `🥘 Main ingredients: ${mainIngredients.join(', ')}\n`
+    }
+    
+    shareText += `\n📱 Found on our recipe app!`
+    
+    return shareText
+  }
+
+  // Copy to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        setCopySuccess(true)
+        setTimeout(() => setCopySuccess(false), 2000)
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed: ', fallbackErr)
+      }
+      document.body.removeChild(textArea)
+    }
+  }
+
+  // Share via Web Share API (if supported)
+  const shareViaWebAPI = async (recipe: Recipe) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipe.name,
+          text: generateShareText(recipe),
+          url: window.location.href
+        })
+      } catch (err) {
+        console.error('Error sharing:', err)
+      }
+    } else {
+      // Fallback to copy to clipboard
+      copyToClipboard(generateShareText(recipe))
     }
   }
 
@@ -383,6 +464,17 @@ export default function RecipesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {recipes.map((recipe) => (
             <div key={recipe.id} className="bg-gray-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#3DD1F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#3DD1F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
+              
+              {/* Share Button */}
+              <button
+                  onClick={() => handleShareClick(recipe)}
+                  className="p-2 rounded-full bg-white/80 text-gray-600 hover:bg-blue-500 hover:text-white backdrop-blur-sm transition-all"
+                  title="Share recipe"
+                >
+                  <Share2 size={20} />
+                </button>
+
+
               {/* Heart Icon */}
               <button
                 onClick={() => handleHeartClick(recipe)}
