@@ -382,7 +382,7 @@ export default function RecipesPage() {
         {/* Recipes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {recipes.map((recipe) => (
-            <div key={recipe.id} className="bg-orange-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#3DD1F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#3DD1F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
+            <div key={recipe.id} className="bg-gray-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#3DD1F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#3DD1F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
               {/* Heart Icon */}
               <button
                 onClick={() => handleHeartClick(recipe)}
@@ -460,13 +460,13 @@ export default function RecipesPage() {
                       {recipe.tags.slice(0, 3).map((tag) => (
                         <span
                           key={tag.id}
-                          className="px-2 py-1 bg-orange-200 text-orange-800 text-xs rounded-full"
+                          className="px-2 py-1 bg-blue-200 text-blue-800 text-xs rounded-full"
                         >
                           {tag.name.replace(/_/g, ' ')}
                         </span>
                       ))}
                       {recipe.tags.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-gray-300 text-gray-700 text-xs rounded-full">
                           +{recipe.tags.length - 3} more
                         </span>
                       )}
@@ -506,7 +506,7 @@ export default function RecipesPage() {
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               currentPage === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-orange-600 text-white hover:bg-orange-700'
+                : 'bg-purple-600 text-white hover:bg-purple-700'
             }`}
           >
             <ChevronLeft />
@@ -516,7 +516,7 @@ export default function RecipesPage() {
           </span>
           <button
             onClick={handleNextPage}
-            className="px-4 py-2 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors"
+            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors"
           >
             <ChevronRight />
           </button>
@@ -594,7 +594,7 @@ export default function RecipesPage() {
                 <button
                   onClick={addToFavorites}
                   disabled={isUpdating}
-                  className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdating ? 'Adding...' : 'Add to Favorites'}
                 </button>
