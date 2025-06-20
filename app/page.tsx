@@ -60,6 +60,29 @@ export default function Home() {
             <p className="text-gray-600 font-medium">Save and organize your favorite content</p>
           </div>
         </div>
+
+        {/* Stats Section */}
+        <div className="mt-16 bg-black text-white p-8 border-4 border-black">
+          <h2 className="text-3xl font-black mb-8">Join the Wellness Community</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <div className="text-4xl font-black text-cyan-400 mb-2">1000+</div>
+              <div className="text-lg font-bold">Workouts</div>
+            </div>
+            <div>
+              <div className="text-4xl font-black text-yellow-400 mb-2">500+</div>
+              <div className="text-lg font-bold">Recipes</div>
+            </div>
+            <div>
+              <div className="text-4xl font-black text-green-400 mb-2">200+</div>
+              <div className="text-lg font-bold">Vegan Options</div>
+            </div>
+            <div>
+              <div className="text-4xl font-black text-pink-400 mb-2">∞</div>
+              <div className="text-lg font-bold">Inspiration</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
