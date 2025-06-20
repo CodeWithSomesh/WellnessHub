@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Heart, MessageSquare, X, Clock, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MessageSquare, X, Clock, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
 declare global {
@@ -15,8 +15,8 @@ type Gym = {
   place_id: string;
   name: string;
   formatted_address?: string;
-  rating?: number;
-  photos?: any[];
+  rating: number;
+  photos: any[];
   geometry: {
     location: {
       lat: () => number;
@@ -38,8 +38,8 @@ interface FavoriteGym {
   gymId: string;
   gymName: string;
   address: string;
-  rating?: number;
-  photoUrl?: string;
+  rating: number;
+  photoUrl: string;
   comment: string;
   createdAt: string;
   updatedAt: string;
@@ -141,25 +141,19 @@ export default function GymsPage() {
       return {
         text: 'Hours Unknown',
         textColor: 'text-gray-600',
-        bgColor: 'bg-gray-100',
-        borderColor: 'border-gray-300'
       };
     }
     
     if (isOpen) {
       return {
-        text: 'Open Now',
+        text: 'Open',
         textColor: 'text-green-700',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-400'
       };
     }
     
     return {
       text: 'Closed',
       textColor: 'text-red-700',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-400'
     };
   };
 
@@ -220,9 +214,6 @@ export default function GymsPage() {
   const addToFavorites = async () => {
     if (!selectedGym || !user) return;
 
-    console.log("Adding to favorites...");
-    console.log("selectedGym.place_id:", selectedGym.place_id);
-    
     if (!selectedGym.place_id) {
       alert('Error: Unable to save this gym. Missing place ID.');
       return;
@@ -312,20 +303,88 @@ export default function GymsPage() {
     }
   };
 
+  // Helper function to check if Street View image URL actually loads
+  const validateStreetViewImage = (lat: number, lng: number): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const imageUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x300&location=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
+      const img = new Image();
+      
+      img.onload = () => {
+        // Check if the image has reasonable dimensions (not a tiny error image)
+        if (img.naturalWidth > 100 && img.naturalHeight > 100) {
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      };
+      
+      img.onerror = () => {
+        resolve(false);
+      };
+      
+      // Set a timeout to avoid hanging
+      setTimeout(() => {
+        resolve(false);
+      }, 5000);
+      
+      img.src = imageUrl;
+    });
+  };
+
+  // Helper function to check if Street View exists at location
+  const checkStreetViewExists = (lat: number, lng: number): Promise<boolean> => {
+    return new Promise(async (resolve) => {
+      const streetViewService = new window.google.maps.StreetViewService();
+      streetViewService.getPanorama(
+        { location: { lat, lng }, radius: 100 },
+        async (data: any, status: string) => {
+          const hasStreetView = status === window.google.maps.StreetViewStatus.OK;
+          
+          if (hasStreetView) {
+            // Double-check by trying to load the actual image
+            const imageLoads = await validateStreetViewImage(lat, lng);
+            resolve(imageLoads);
+          } else {
+            resolve(false);
+          }
+        }
+      );
+    });
+  };
+
+  // Helper function to check if gym has valid imagery (photos OR confirmed street view)
+  const hasValidImagery = async (gym: any): Promise<boolean> => {
+    // If gym has photos, it's valid
+    if (gym.photos && gym.photos.length > 0) {
+      return true;
+    }
+    
+    // If gym has coordinates, check if Street View exists
+    if (gym.geometry && gym.geometry.location) {
+      const lat = gym.geometry.location.lat();
+      const lng = gym.geometry.location.lng();
+      const hasStreetView = await checkStreetViewExists(lat, lng);
+      return hasStreetView;
+    }
+    
+    return false; // No photos and no valid coordinates
+  };
+
   // Search gyms by state
   const searchGyms = (state: string) => {
     setLoading(true);
     setError('');
     setGyms([]);
     setCurrentPage(0); // Reset UI pagination
-
+    
     const allGyms: Gym[] = [];
-
+    const processedPlaceIds = new Set<string>(); // Track processed place_ids to avoid duplicates
+    
     const initMapAndSearch = () => {
       const dummyMap = document.createElement('div');
       const map = new window.google.maps.Map(dummyMap);
       const service = new window.google.maps.places.PlacesService(map);
-
+      
       const query = state === 'All' ? 'gym in Malaysia' : `gym in ${state}, Malaysia`;
       const request = {
         query,
@@ -341,17 +400,16 @@ export default function GymsPage() {
         }
 
         let processed = 0;
-
+        
         results.forEach((gym) => {
           // IMPORTANT: Make sure we have place_id from the initial results
-          if (!gym.place_id) {
-            console.warn('Gym missing place_id in initial results:', gym);
+          if (!gym.place_id || processedPlaceIds.has(gym.place_id)) {
             processed++;
             if (processed === results.length) {
               if (pagination && pagination.hasNextPage) {
                 setTimeout(() => pagination.nextPage(), 2000);
               } else {
-                allGyms.sort((a, b) =>
+                allGyms.sort((a, b) => 
                   a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
                 );
                 setGyms(allGyms);
@@ -361,44 +419,47 @@ export default function GymsPage() {
             return;
           }
 
+          // Mark this place_id as being processed
+          processedPlaceIds.add(gym.place_id);
+
           service.getDetails(
             {
               placeId: gym.place_id,
               fields: ['place_id', 'name', 'formatted_address', 'rating', 'photos', 'geometry', 'opening_hours'],
             },
-            (placeDetails: Gym | null, statusDetails: string) => {
-              processed++;
-
-              if (
-                statusDetails === window.google.maps.places.PlacesServiceStatus.OK &&
-                placeDetails &&
-                placeDetails.place_id && // Ensure place_id exists
-                placeDetails.opening_hours // Only include if opening hours exist
-              ) {
-                // Double-check that place_id is preserved
-                if (!placeDetails.place_id) {
-                  placeDetails.place_id = gym.place_id;
+            async (placeDetails: Gym | null, statusDetails: string) => {
+              try {
+                processed++;
+                
+                if (
+                  statusDetails === window.google.maps.places.PlacesServiceStatus.OK &&
+                  placeDetails &&
+                  placeDetails.place_id && // Ensure place_id exists
+                  placeDetails.opening_hours // Only include if opening hours exist
+                ) {
+                  // Check if gym has valid imagery (photos or confirmed street view)
+                  const hasImagery = await hasValidImagery(placeDetails);
+                  
+                  if (hasImagery) {
+                    // Double-check that place_id is preserved
+                    if (!placeDetails.place_id) {
+                      placeDetails.place_id = gym.place_id;
+                    }
+                    
+                    allGyms.push(placeDetails);
+                  }
                 }
-                allGyms.push(placeDetails);
-              } else {
-                console.warn('Gym details missing or invalid:', {
-                  statusDetails,
-                  placeDetails: placeDetails ? {
-                    name: placeDetails.name,
-                    place_id: placeDetails.place_id,
-                    hasOpeningHours: !!placeDetails.opening_hours
-                  } : null
-                });
+              } catch (error) {
+                console.error(`Error processing gym ${placeDetails?.name}:`, error);
               }
 
               if (processed === results.length) {
                 if (pagination && pagination.hasNextPage) {
                   setTimeout(() => pagination.nextPage(), 2000);
                 } else {
-                  allGyms.sort((a, b) =>
+                  allGyms.sort((a, b) => 
                     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
                   );
-                  console.log(`Loaded ${allGyms.length} gyms for ${state}`);
                   setGyms(allGyms);
                   setLoading(false);
                 }
@@ -490,7 +551,7 @@ export default function GymsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-600 mx-auto"></div>
           <p className="mt-4 text-lg text-gray-600">Loading gyms...</p>
         </div>
       </div>
@@ -506,7 +567,7 @@ export default function GymsPage() {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => searchGyms(selectedState)}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            className="bg-cyan-600 text-white px-6 py-2 rounded-lg hover:bg-cyan-700 transition-colors"
           >
             Try Again
           </button>
@@ -534,7 +595,7 @@ export default function GymsPage() {
                 onClick={() => handleStateChange(state.value)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   selectedState === state.value
-                    ? 'bg-[#33f875] text-white'
+                    ? 'bg-cyan-500 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -561,7 +622,7 @@ export default function GymsPage() {
             const openStatus = getOpenStatusForHours(gym);
 
             return (
-              <div key={`${gym.place_id}-${idx}`} className="bg-green-50 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-green-500 shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#10b981] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150 flex flex-col">
+              <div key={`${gym.place_id}-${idx}`} className="bg-cyan-50 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-cyan-500 shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#10b981] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150 flex flex-col">
                 {/* Heart Icon */}
                 <button
                   onClick={() => handleHeartClick(gym)}
@@ -591,7 +652,7 @@ export default function GymsPage() {
                   )}
                 </div>
 
-                <div className="p-4 border-t-2 border-green-300 flex-1 flex flex-col">
+                <div className="p-4 border-t-2 border-cyan-300 flex-1 flex flex-col">
                   <h3 className="font-bold text-lg lg:text-xl text-gray-800 mb-2">
                     {gym.name}
                   </h3>
@@ -600,53 +661,47 @@ export default function GymsPage() {
                     <p className="text-yellow-600 font-medium">
                       {gym.rating ? `⭐ ${gym.rating.toFixed(1)}` : 'No reviews'}
                     </p>
+                    {/* Opening Hours with integrated Open/Closed status */}
+                    <div>
+                      {hoursInfo ? (
+                        <div className="flex items-center justify-between">
+                          {/* Clock and Hours */}
+                          <div className="flex items-center space-x-2">
+                            <Clock size={16} className={`${openStatus.textColor}`} />
+                            <span className={`text-sm font-medium ${openStatus.textColor}`}>Today:</span>
+                            <span className={`text-xs ${openStatus.textColor}`}>
+                              {hoursInfo.todayHours.replace(/^[A-Za-z]+:\s*/, '')}
+                            </span>
+                          </div>
+
+                          {/* Open/Closed */}
+                          <div className={`px-2 py-1 rounded text-xs font-semibold ${openStatus.textColor}`}>
+                            {openStatus.text}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Clock size={16} className="text-gray-400" />
+                            <span className="text-sm text-gray-500">Hours not available</span>
+                          </div>
+                          <div className={`px-2 py-1 rounded text-xs font-semibold ${openStatus.textColor}`}>
+                            {openStatus.text}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Opening Hours with integrated Open/Closed status */}
-<div className="mb-3">
-  {hoursInfo ? (
-    <div className={`p-2 rounded-lg border-2 ${openStatus.bgColor} ${openStatus.borderColor}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-2 flex-1">
-          <Clock size={16} className={`${openStatus.textColor} mt-0.5 flex-shrink-0`} />
-          <div className="flex-1">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-800">Today:</span>
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              {hoursInfo.todayHours.replace(/^[A-Za-z]+:\s*/, '')}
-            </p>
-          </div>
-        </div>
-        <div className={`px-2 py-1 rounded text-xs font-semibold ${openStatus.textColor}`}>
-          {openStatus.text}
-        </div>
-      </div>
-    </div>
-  ) : (
-    <div className={`p-2 rounded-lg border-2 ${openStatus.bgColor} ${openStatus.borderColor}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Clock size={16} className="text-gray-400" />
-          <span className="text-sm text-gray-500">Hours not available</span>
-        </div>
-        <div className={`px-2 py-1 rounded text-xs font-semibold ${openStatus.textColor}`}>
-          {openStatus.text}
-        </div>
-      </div>
-    </div>
-  )}
-</div>
-
-{/* Show comment if favorited */}
-{gym.place_id && isFavorited(gym.place_id) && getFavoriteData(gym.place_id)?.comment && (
-  <div className="p-2 bg-[#deffe9] rounded-lg border-2 border-gray-400 flex items-start">
-    <MessageSquare size={16} className="text-green-600 mt-0.5 mr-2 flex-shrink-0" />
-    <p className="text-sm text-green-800 line-clamp-3">
-      {getFavoriteData(gym.place_id)?.comment}
-    </p>
-  </div>
-)}
+                  {/* Show comment if favorited */}
+                  {gym.place_id && isFavorited(gym.place_id) && getFavoriteData(gym.place_id)?.comment && (
+                    <div className="p-2 bg-blue-50 rounded-lg border-2 border-gray-400 flex items-start">
+                      <MessageSquare size={16} className="mt-0.5 mr-2 flex-shrink-0" />
+                      <p className="text-sm text-blue-800 line-clamp-3">
+                        {getFavoriteData(gym.place_id)?.comment}
+                      </p>
+                    </div>
+                  )}
 
                 </div>
               </div>
@@ -708,7 +763,7 @@ export default function GymsPage() {
             </div>
             
             {selectedGym && (
-              <div className="mb-4 p-3 bg-green-50 rounded-lg border-2 border-green-200">
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-800">{selectedGym.name}</h4>
                 <p className="text-sm text-gray-600">{selectedGym.formatted_address}</p>
                 {selectedGym.rating && (
@@ -734,7 +789,7 @@ export default function GymsPage() {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="e.g., Great equipment, close to home, try the spinning class..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
                 rows={3}
               />
             </div>
@@ -745,7 +800,7 @@ export default function GymsPage() {
                   <button
                     onClick={updateFavoriteComment}
                     disabled={isUpdating}
-                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isUpdating ? 'Updating...' : 'Update Note'}
                   </button>
@@ -761,7 +816,7 @@ export default function GymsPage() {
                 <button
                   onClick={addToFavorites}
                   disabled={isUpdating}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdating ? 'Adding...' : 'Add to Favorites'}
                 </button>
