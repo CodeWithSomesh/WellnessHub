@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Heart, MessageSquare, X, Clock, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MessageSquare, X, Clock, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
 declare global {
@@ -66,13 +66,34 @@ const MALAYSIAN_STATES = [
   { value: 'Terengganu', label: 'Terengganu' }
 ];
 
+const STATE_ALIASES: Record<string, string[]> = {
+  'johor': ['johor', 'johor darul taʼzim'],
+  'kedah': ['kedah', 'kedah darul aman'],
+  'kelantan': ['kelantan', 'kelantan darul naim'],
+  'melaka': ['melaka', 'malacca'],
+  'negeri sembilan': ['negeri sembilan'],
+  'pahang': ['pahang', 'pahang darul makmur'],
+  'penang': ['penang', 'pulau pinang'],
+  'perak': ['perak', 'perak darul ridzuan'],
+  'perlis': ['perlis', 'perlis indera kayangan'],
+  'sabah': ['sabah'],
+  'sarawak': ['sarawak'],
+  'selangor': ['selangor', 'selangor darul ehsan'],
+  'terengganu': ['terengganu', 'terengganu darul iman'],
+  'kuala lumpur': ['kuala lumpur', 'kl', 'wilayah persekutuan kuala lumpur', 'wilayah persekutuan'],
+  'putrajaya': ['putrajaya', 'wilayah persekutuan putrajaya'],
+  'labuan': ['labuan', 'wilayah persekutuan labuan'],
+};
+
 export default function GymsPage() {
   const { user, isLoaded } = useUser();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [favorites, setFavorites] = useState<FavoriteGym[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState<string>('')
   const [selectedState, setSelectedState] = useState('Penang');
+  const [showFilters, setShowFilters] = useState(false)
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
@@ -85,47 +106,55 @@ export default function GymsPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [editingFavorite, setEditingFavorite] = useState<FavoriteGym | null>(null);
 
-  // Function to check if gym is currently open
-  const isGymOpen = (openingHours?: { weekday_text?: string[]; periods?: Array<{ close?: { day: number; time: string }; open: { day: number; time: string }; }> }) => {
-    if (!openingHours || !openingHours.periods) return null;
+  const isGymOpen = (openingHours?: {
+    weekday_text?: string[];
+    periods?: Array<{
+      close?: { day: number; time: string };
+      open: { day: number; time: string };
+    }>;
+  }) => {
+    if (!openingHours) return null;
 
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
-
-    // Find today's periods
-    const todayPeriods = openingHours.periods.filter(period => period.open.day === currentDay);
-    
-    if (todayPeriods.length === 0) {
-      // Check if it's a 24/7 place or closed today
-      const allDayPeriods = openingHours.periods.filter(period => !period.close);
-      if (allDayPeriods.length > 0) return true; // 24/7
-      return false; // Closed today
+    // If any line says "Open 24 hours", consider gym always open
+    if (
+      openingHours.weekday_text &&
+      openingHours.weekday_text.some(text =>
+        text.toLowerCase().includes("open 24 hours")
+      )
+    ) {
+      return true;
     }
 
-    // Check each period for today
+    if (!openingHours.periods) return null;
+
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 = Sunday
+    const currentTime = now.getHours() * 100 + now.getMinutes(); // HHMM format
+
+    // Today's periods
+    const todayPeriods = openingHours.periods.filter(
+      period => period.open.day === currentDay
+    );
+
+    if (todayPeriods.length === 0) {
+      // Check for periods without close time (could be 24-hour marker)
+      const allDayPeriods = openingHours.periods.filter(period => !period.close);
+      if (allDayPeriods.length > 0) return true;
+      return false;
+    }
+
     for (const period of todayPeriods) {
       const openTime = parseInt(period.open.time);
-      let closeTime = period.close ? parseInt(period.close.time) : 2359;
-      
-      // Handle overnight periods (e.g., open until next day)
+      const closeTime = period.close ? parseInt(period.close.time) : 2359;
+
       if (period.close && period.close.day !== period.open.day) {
-        // This period goes to the next day
-        if (currentTime >= openTime || currentTime <= closeTime) {
-          return true;
-        }
+        // Overnight span
+        if (currentTime >= openTime || currentTime <= closeTime) return true;
       } else {
-        // Normal same-day period
         if (closeTime < openTime) {
-          // Overnight within same day (rare but possible)
-          if (currentTime >= openTime || currentTime <= closeTime) {
-            return true;
-          }
+          if (currentTime >= openTime || currentTime <= closeTime) return true;
         } else {
-          // Normal period
-          if (currentTime >= openTime && currentTime < closeTime) {
-            return true;
-          }
+          if (currentTime >= openTime && currentTime < closeTime) return true;
         }
       }
     }
@@ -370,8 +399,8 @@ export default function GymsPage() {
     return false; // No photos and no valid coordinates
   };
 
-  // Search gyms by state
-  const searchGyms = (state: string) => {
+  // Search gyms by state and term
+  const searchGyms = (state: string, term: string) => {
     setLoading(true);
     setError('');
     setGyms([]);
@@ -384,17 +413,13 @@ export default function GymsPage() {
       const dummyMap = document.createElement('div');
       const map = new window.google.maps.Map(dummyMap);
       const service = new window.google.maps.places.PlacesService(map);
-      
-      const query = state === 'All' ? 'gym in Malaysia' : `gym in ${state}, Malaysia`;
-      const request = {
-        query,
-        type: 'gym',
-      };
+
+      const locationQuery = state === 'All' ? 'Malaysia' : `${state}, Malaysia`;
+      const query = term ? `gym ${term} in ${locationQuery}` : `gym in ${locationQuery}`;
+      const request = { query, type: 'gym' };
 
       const fetchResults = (results: any[], status: string, pagination?: any) => {
         if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results) {
-          const locationText = state === 'All' ? 'Malaysia' : state;
-          setError(`Failed to fetch gyms in ${locationText}`);
           setLoading(false);
           return;
         }
@@ -402,50 +427,47 @@ export default function GymsPage() {
         let processed = 0;
         
         results.forEach((gym) => {
-          // IMPORTANT: Make sure we have place_id from the initial results
           if (!gym.place_id || processedPlaceIds.has(gym.place_id)) {
             processed++;
             if (processed === results.length) {
-              if (pagination && pagination.hasNextPage) {
+              if (pagination?.hasNextPage) {
                 setTimeout(() => pagination.nextPage(), 2000);
               } else {
-                allGyms.sort((a, b) => 
-                  a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-                );
-                setGyms(allGyms);
-                setLoading(false);
+                finaliseResults(allGyms, state);
               }
             }
             return;
           }
 
-          // Mark this place_id as being processed
           processedPlaceIds.add(gym.place_id);
 
           service.getDetails(
             {
               placeId: gym.place_id,
-              fields: ['place_id', 'name', 'formatted_address', 'rating', 'photos', 'geometry', 'opening_hours'],
+              fields: [
+                'place_id',
+                'name',
+                'formatted_address',
+                'rating',
+                'photos',
+                'geometry',
+                'opening_hours'
+              ],
             },
             async (placeDetails: Gym | null, statusDetails: string) => {
               try {
                 processed++;
-                
+
                 if (
                   statusDetails === window.google.maps.places.PlacesServiceStatus.OK &&
                   placeDetails &&
                   placeDetails.place_id && // Ensure place_id exists
                   placeDetails.opening_hours // Only include if opening hours exist
                 ) {
-                  // Check if gym has valid imagery (photos or confirmed street view)
                   const hasImagery = await hasValidImagery(placeDetails);
                   
                   if (hasImagery) {
-                    // Double-check that place_id is preserved
-                    if (!placeDetails.place_id) {
-                      placeDetails.place_id = gym.place_id;
-                    }
-                    
+                    if (!placeDetails.place_id) placeDetails.place_id = gym.place_id;
                     allGyms.push(placeDetails);
                   }
                 }
@@ -454,14 +476,10 @@ export default function GymsPage() {
               }
 
               if (processed === results.length) {
-                if (pagination && pagination.hasNextPage) {
+                if (pagination?.hasNextPage) {
                   setTimeout(() => pagination.nextPage(), 2000);
                 } else {
-                  allGyms.sort((a, b) => 
-                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-                  );
-                  setGyms(allGyms);
-                  setLoading(false);
+                  finaliseResults(allGyms, state);
                 }
               }
             }
@@ -470,6 +488,52 @@ export default function GymsPage() {
       };
 
       service.textSearch(request, fetchResults);
+    };
+
+    const finaliseResults = (gyms: Gym[], selectedState: string) => {
+      const lowerTerm = term.trim().toLowerCase();
+      const includesOpen = lowerTerm.includes('open');
+      const includesClosed = lowerTerm.includes('closed');
+      const includes24Hours = lowerTerm.includes('24 hour') || lowerTerm.includes('24 hours');
+
+      const addressMatchesState = (address: string | undefined): boolean => {
+        if (selectedState === 'All') return true;
+        if (!address) return false;
+
+        const lowerAddress = address.toLowerCase();
+        const aliases = STATE_ALIASES[selectedState.toLowerCase()] || [selectedState.toLowerCase()];
+        return aliases.some(alias => lowerAddress.includes(alias));
+      };
+
+      const nameOrAddressMatchesTerm = (gym: Gym): boolean => {
+        if (!lowerTerm || includesOpen || includesClosed || includes24Hours) return true;
+        return (
+          (gym.name?.toLowerCase().includes(lowerTerm) ?? false) ||
+          (gym.formatted_address?.toLowerCase().includes(lowerTerm) ?? false)
+        );
+      };
+
+      const filtered = gyms.filter(gym => {
+        const matchesState = addressMatchesState(gym.formatted_address);
+        const matchesNameOrAddress = nameOrAddressMatchesTerm(gym);
+        const isOpenNow = isGymOpen(gym.opening_hours);
+        const is24H = gym.opening_hours?.weekday_text?.some(t =>
+          t.toLowerCase().includes('open 24 hours')
+        ) ?? false;
+
+        if (includesOpen && !isOpenNow) return false;
+        if (includesClosed && isOpenNow) return false;
+        if (includes24Hours && !is24H) return false;
+
+        return matchesState && matchesNameOrAddress;
+      });
+
+      filtered.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      );
+
+      setGyms(filtered);
+      setLoading(false);
     };
 
     if (!window.google || !window.google.maps) {
@@ -488,10 +552,10 @@ export default function GymsPage() {
   };
 
   // Handle state change
-  const handleStateChange = (state: string) => {
+  const handleStateChange = (state: string, term: string) => {
     setSelectedState(state);
     setCurrentPage(0); // Reset to first page when changing state
-    searchGyms(state);
+    searchGyms(state, term);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -500,6 +564,12 @@ export default function GymsPage() {
   const indexOfFirstGym = currentPage * gymsPerPage;
   const currentGyms = gyms.slice(indexOfFirstGym, indexOfLastGym);
   const totalPages = Math.ceil(gyms.length / gymsPerPage);
+
+  // Handle search
+  const handleSearch = (term: string) => {
+    setCurrentPage(0)
+    searchGyms(selectedState, term)
+  };
 
   // Handle pagination
   const handleNextPage = () => {
@@ -533,7 +603,7 @@ export default function GymsPage() {
   };
 
   useEffect(() => {
-    searchGyms(selectedState);
+    searchGyms(selectedState, searchTerm);
   }, []);
 
   useEffect(() => {
@@ -566,7 +636,7 @@ export default function GymsPage() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => searchGyms(selectedState)}
+            onClick={() => searchGyms(selectedState, searchTerm)}
             className="bg-cyan-600 text-white px-6 py-2 rounded-lg hover:bg-cyan-700 transition-colors"
           >
             Try Again
@@ -585,25 +655,83 @@ export default function GymsPage() {
           <p className="text-gray-600 text-lg">Find the perfect gym for your fitness journey</p>
         </div>
 
-        {/* State Filter Section */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Filter by State:</h3>
-          <div className="flex flex-wrap gap-2">
-            {MALAYSIAN_STATES.map((state) => (
-              <button
-                key={state.value}
-                onClick={() => handleStateChange(state.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedState === state.value
-                    ? 'bg-cyan-500 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {state.label}
-              </button>
-            ))}
+        {/* Search and Filter Section */}
+        <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search gyms..."
+                 value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)} // still track input
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(searchTerm); // trigger search
+                  }
+                }}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              />
+            </div>
           </div>
-        </div>
+
+          {/* Filter Toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2 text-cyan-600 hover:text-cyan-700"
+            >
+              <Filter size={18} />
+              <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
+            </button>
+          </div>
+
+          {/* State Filter Section */}
+            {showFilters && (
+              <div className="mb-8">
+                <div className="flex flex-wrap gap-2">
+                  {MALAYSIAN_STATES.map((state) => (
+                    <button
+                      key={state.value}
+                      onClick={() => handleStateChange(state.value, searchTerm)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedState === state.value
+                          ? 'bg-cyan-500 text-white'
+                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {state.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+        
+
+        {/* Error or No Results */}
+        {gyms.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No gyms found</h3>
+            <p className="text-gray-600 mb-4">
+              Try adjusting your search terms or filters
+            </p>
+            <button
+              onClick={() => {
+                setSelectedState('All');
+                setSearchTerm('');
+                searchGyms('All', '');
+              }}
+              className="text-cyan-600 hover:text-cyan-700 font-medium"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
 
         {/* Gyms Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
