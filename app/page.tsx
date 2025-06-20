@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Heart, Star, Coffee, Dumbbell } from "lucide-react";
 
 export default function Home() {
   return (
@@ -22,6 +23,41 @@ export default function Home() {
             <Button variant="outline" className="border-4 border-black bg-white hover:bg-gray-100 text-black font-bold px-8 py-4 text-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
               View Favorites
             </Button>
+          </div>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+            <div className="w-16 h-16 bg-pink-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Dumbbell className="w-8 h-8 text-black" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Workouts</h3>
+            <p className="text-gray-600 font-medium">Find perfect exercises for every fitness level</p>
+          </div>
+
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+            <div className="w-16 h-16 bg-yellow-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Coffee className="w-8 h-8 text-black" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Recipes</h3>
+            <p className="text-gray-600 font-medium">Delicious & healthy meals for every occasion</p>
+          </div>
+
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+            <div className="w-16 h-16 bg-green-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Star className="w-8 h-8 text-black" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Quotes</h3>
+            <p className="text-gray-600 font-medium">Daily motivation to keep you inspired</p>
+          </div>
+
+          <div className="bg-white border-4 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+            <div className="w-16 h-16 bg-purple-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Heart className="w-8 h-8 text-black" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Favorites</h3>
+            <p className="text-gray-600 font-medium">Save and organize your favorite content</p>
           </div>
         </div>
       </div>
