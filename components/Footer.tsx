@@ -4,7 +4,7 @@ import { Heart, Github, Twitter, Instagram } from "lucide-react";
 const Footer = () => {
   return (
     <footer className="bg-white border-t-4 border-black py-12">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="md:col-span-2">
@@ -33,20 +33,20 @@ const Footer = () => {
               <li><a href="/workouts" className="text-gray-600 font-medium hover:text-black transition-colors">Workouts</a></li>
               <li><a href="/classicRecipes" className="text-gray-600 font-medium hover:text-black transition-colors">Classic Recipes</a></li>
               <li><a href="/veganRecipes" className="text-gray-600 font-medium hover:text-black transition-colors">Vegan Recipes</a></li>
-              <li><a href="/quotes" className="text-gray-600 font-medium hover:text-black transition-colors">Quotes</a></li>
+              <li><a href="/gyms" className="text-gray-600 font-medium hover:text-black transition-colors">Gyms</a></li>
               <li><a href="/favorites" className="text-gray-600 font-medium hover:text-black transition-colors">Favorites</a></li>
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Features */}
           <div>
-            <h4 className="text-lg font-black text-gray-900 mb-4">Categories</h4>
+            <h4 className="text-lg font-black text-gray-900 mb-4">Features</h4>
             <div className="space-y-2">
-              <span className="inline-block bg-green-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Healthy</span>
-              <span className="inline-block bg-blue-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Easy</span>
-              <span className="inline-block bg-yellow-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Quick</span>
-              <span className="inline-block bg-purple-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Vegan</span>
-              <span className="inline-block bg-pink-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Comfort</span>
+              <span className="inline-block bg-pink-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Track Workouts</span>
+              <span className="inline-block bg-purple-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Browse Classic & Vegan Recipes</span>
+              <span className="inline-block bg-yellow-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Find Nearby Gyms</span>
+              <span className="inline-block bg-green-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Save Favorites</span>
+              <span className="inline-block bg-blue-400 text-black px-3 py-1 border-2 border-black font-bold text-sm mr-2 mb-2">Add Comments</span>
             </div>
           </div>
         </div>
