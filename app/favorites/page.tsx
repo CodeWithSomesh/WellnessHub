@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { Heart, Clock, Users, MapPin, Utensils, Dumbbell, Star, Trash2, MessageCircle, Edit3, Save, X, Leaf } from 'lucide-react'
 import Image from 'next/image'
@@ -72,6 +72,20 @@ export default function FavoritesPage() {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
   const [editingComment, setEditingComment] = useState<{ type: string, id: string } | null>(null)
   const [editComment, setEditComment] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  
+  useEffect(() => {
+    if (editingComment && textareaRef.current) {
+      const textarea = textareaRef.current
+      // Use setTimeout to ensure the value is set first
+      setTimeout(() => {
+        textarea.focus()
+        const length = textarea.value.length
+        textarea.setSelectionRange(length, length)
+      }, 0)
+    }
+  }, [editingComment, editComment]) // Add editComment as dependency
 
   useEffect(() => {
     if (userId) {
@@ -178,8 +192,11 @@ export default function FavoritesPage() {
   }
 
   const startEditing = (type: string, id: string, currentComment: string) => {
-    setEditingComment({ type, id })
-    setEditComment(currentComment || '')
+    // Only set editing state if not already editing this item
+    if (editingComment?.type !== type || editingComment?.id !== id) {
+      setEditingComment({ type, id })
+      setEditComment(currentComment || '')
+    }
   }
 
   const cancelEditing = () => {
@@ -244,11 +261,14 @@ export default function FavoritesPage() {
         {isEditing ? (
           <div className="space-y-2">
             <textarea
+              ref={textareaRef}
+              key={`${type}-${id}-edit`}
               value={editComment}
               onChange={(e) => setEditComment(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded text-sm resize-none"
               rows={3}
               placeholder="Add your note..."
+              autoFocus
             />
             <div className="flex justify-end gap-2 rounded-md">
               <button
@@ -318,7 +338,7 @@ export default function FavoritesPage() {
 
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="bg-yellow-200 border border-black px-3 py-1 rounded-full font-medium">
+          <span className="bg-yellow-200 border border-black px-3 py-1 rounded-full font-medium capitalize">
             {workout.equipment}
           </span>
         </div>
