@@ -300,7 +300,7 @@ export default function FavoritesPage() {
     <div className="bg-white border-4 border-black rounded-lg p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
-          <div className="bg-purple-500 border-2 border-black rounded-lg p-3">
+          <div className="bg-[#D433F8] border-2 border-black rounded-lg p-3">
             <Dumbbell className="w-6 h-6 text-white" />
           </div>
           <div className='mr-4'>
@@ -747,7 +747,7 @@ export default function FavoritesPage() {
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           {[
             { key: 'all', label: `All (${allFavorites.length})`, color: 'bg-gray-500' },
-            { key: 'workouts', label: `Workouts (${workouts.length})`, color: 'bg-purple-500' },
+            { key: 'workouts', label: `Workouts (${workouts.length})`, color: 'bg-[#D433F8]' },
             { key: 'recipes', label: `Classic Recipes (${recipes.length})`, color: 'bg-amber-400' },
             { key: 'veganRecipes', label: `Vegan Recipes (${veganRecipes.length})`, color: 'bg-emerald-500' },
             { key: 'gyms', label: `Gyms (${gyms.length})`, color: 'bg-red-500' }
