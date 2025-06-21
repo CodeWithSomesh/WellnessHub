@@ -107,6 +107,110 @@ export default function FavoritesPage() {
     }
   }
 
+  const removeFavorite = async (type: 'workout' | 'recipe' | 'veganRecipe' | 'gym', id: string) => {
+    try {
+      const endpoint = type === 'workout' ? `/api/favWorkouts/${id}` : 
+                     type === 'recipe' ? `/api/favRecipes/${id}` : 
+                     type === 'veganRecipe' ? `/api/favVeganRecipes/${id}` : `/api/favGyms/${id}`
+      
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (response.ok) {
+        if (type === 'workout') {
+          setWorkouts(prev => prev.filter(item => item._id !== id))
+        } else if (type === 'recipe') {
+          setRecipes(prev => prev.filter(item => item._id !== id))
+        } else if (type === 'veganRecipe') {
+          setVeganRecipes(prev => prev.filter(item => item._id !== id))
+        } else {
+          setGyms(prev => prev.filter(item => item._id !== id))
+        }
+      } else {
+        console.error('Failed to remove favorite')
+      }
+    } catch (error) {
+      console.error('Error removing favorite:', error)
+    }
+  }
+
+  const updateComment = async (type: 'workout' | 'recipe' | 'veganRecipe' | 'gym', id: string, comment: string) => {
+    try {
+      const endpoint = type === 'workout' ? `/api/favWorkouts/${id}` : 
+                     type === 'recipe' ? `/api/favRecipes/${id}` : 
+                     type === 'veganRecipe' ? `/api/favVeganRecipes/${id}` : `/api/favGyms/${id}`
+      
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment })
+      })
+
+      if (response.ok) {
+        // Update the local state
+        if (type === 'workout') {
+          setWorkouts(prev => prev.map(item => 
+            item._id === id ? { ...item, comment } : item
+          ))
+        } else if (type === 'recipe') {
+          setRecipes(prev => prev.map(item => 
+            item._id === id ? { ...item, comment } : item
+          ))
+        } else if (type === 'veganRecipe') {
+          setVeganRecipes(prev => prev.map(item => 
+            item._id === id ? { ...item, comment } : item
+          ))
+        } else {
+          setGyms(prev => prev.map(item => 
+            item._id === id ? { ...item, comment } : item
+          ))
+        }
+        setEditingComment(null)
+        setEditComment('')
+      } else {
+        console.error('Failed to update comment')
+      }
+    } catch (error) {
+      console.error('Error updating comment:', error)
+    }
+  }
+
+  const startEditing = (type: string, id: string, currentComment: string) => {
+    setEditingComment({ type, id })
+    setEditComment(currentComment || '')
+  }
+
+  const cancelEditing = () => {
+    setEditingComment(null)
+    setEditComment('')
+  }
+
+  const saveComment = () => {
+    if (editingComment) {
+      updateComment(editingComment.type as 'workout' | 'recipe' | 'veganRecipe' | 'gym', editingComment.id, editComment)
+    }
+  }
+
+  const toggleExpanded = (id: string) => {
+    const newExpanded = new Set(expandedCards)
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id)
+    } else {
+      newExpanded.add(id)
+    }
+    setExpandedCards(newExpanded)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 py-8">
@@ -122,5 +226,5 @@ export default function FavoritesPage() {
     )
   }
 
-  return <div>Favorites Page - Data Loading Complete</div>
+  return <div>Favorites Page - CRUD Operations Added</div>
 }
