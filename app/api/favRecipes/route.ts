@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { connect } from '@/db'
-import FavoriteRecipe from '@/modals/favRecipes.modal'
+import FavoriteClassicRecipe from '@/modals/favRecipes.modal'
 
 // GET - Fetch user's favorite recipes
 export async function GET() {
@@ -15,7 +15,7 @@ export async function GET() {
 
     await connect()
     
-    const favorites = await FavoriteRecipe.find({ userId }).sort({ createdAt: -1 })
+    const favorites = await FavoriteClassicRecipe.find({ userId }).sort({ createdAt: -1 })
     
     return NextResponse.json({ favorites })
   } catch (error) {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     await connect();
 
     // Check if already favorited
-    const existingFavorite = await FavoriteRecipe.findOne({
+    const existingFavorite = await FavoriteClassicRecipe.findOne({
       userId,
       recipeId: recipe.id.toString()
     })
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create new favorite
-    const newFavorite = await FavoriteRecipe.create({
+    const newFavorite = await FavoriteClassicRecipe.create({
       userId,
       recipeId: recipe.id.toString(),
       recipeName: recipe.name,
