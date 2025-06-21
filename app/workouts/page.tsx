@@ -345,7 +345,7 @@ export default function WorkoutsPage() {
           </div>
 
           {/* Filter Toggle */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -358,7 +358,7 @@ export default function WorkoutsPage() {
 
           {/* Filter Section */}
           {showFilters && (
-            <div className="mb-8">
+            <div className="">
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handleBodyPartChange('')}
@@ -486,7 +486,7 @@ export default function WorkoutsPage() {
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 currentPage === 0
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-[#D433F8] text-white cursor-pointer'
               }`}
             >
               <ChevronLeft />
@@ -496,7 +496,7 @@ export default function WorkoutsPage() {
             </span>
             <button
               onClick={handleNextPage}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#D433F8] text-white font-medium cursor-pointer transition-colors"
             >
               <ChevronRight />
             </button>

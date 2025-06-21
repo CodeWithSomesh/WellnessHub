@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { connect } from '@/db'
-import FavoriteRecipe from '@/modals/favRecipes.modal'
+import FavoriteClassicRecipe from '@/modals/favRecipes.modal'
 
 // PUT - Update comment on favorite recipe
 export async function PUT(
@@ -21,7 +21,7 @@ export async function PUT(
 
     await connect()
 
-    const updatedFavorite = await FavoriteRecipe.findOneAndUpdate(
+    const updatedFavorite = await FavoriteClassicRecipe.findOneAndUpdate(
       { _id: id, userId }, // Make sure user owns this favorite
       { 
         comment,
@@ -60,7 +60,7 @@ export async function DELETE(
 
     const { id } = await params
 
-    const deletedFavorite = await FavoriteRecipe.findOneAndDelete({
+    const deletedFavorite = await FavoriteClassicRecipe.findOneAndDelete({
       _id: id,
       userId
     })

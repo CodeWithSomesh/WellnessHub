@@ -209,7 +209,7 @@ export default function RecipesPage() {
     if (!user) return
     
     try {
-      const response = await axios.get('/api/favRecipes', {
+      const response = await axios.get('/api/favVeganRecipes', {
         timeout: 5000
       })
       setFavorites(response.data.favorites || [])
@@ -263,7 +263,7 @@ export default function RecipesPage() {
         name: selectedRecipe.title,
       }
       
-      await axios.post('/api/favRecipes', {
+      await axios.post('/api/favVeganRecipes', {
         recipe: recipeData,
         comment
       }, {
@@ -298,7 +298,7 @@ export default function RecipesPage() {
     
     setIsUpdating(true)
     try {
-      await axios.put(`/api/favRecipes/${editingFavorite._id}`, {
+      await axios.put(`/api/favVeganRecipes/${editingFavorite._id}`, {
         comment
       }, {
         timeout: 5000
@@ -327,7 +327,7 @@ export default function RecipesPage() {
     
     setIsUpdating(true)
     try {
-      await axios.delete(`/api/favRecipes/${editingFavorite._id}`, {
+      await axios.delete(`/api/favVeganRecipes/${editingFavorite._id}`, {
         timeout: 5000
       })
       

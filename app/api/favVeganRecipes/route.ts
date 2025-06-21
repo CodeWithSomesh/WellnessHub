@@ -1,8 +1,8 @@
-// app/api/favRecipes/route.ts
+// app/api/favVeganRecipes/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { connect } from '@/db'
-import FavoriteRecipe from '@/modals/favRecipes.modal'
+import FavoriteVeganRecipe from '@/modals/favVeganRecipes.modal'
 
 // POST - Add recipe to favorites
 export async function POST(req: NextRequest) {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     // Check if already favorited
     console.log("Checking for existing favorite...");
-    const existingFavorite = await FavoriteRecipe.findOne({
+    const existingFavorite = await FavoriteVeganRecipe.findOne({
       userId,
       recipeId: recipe.id
     })
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Favorite data to save:", JSON.stringify(favoriteData, null, 2));
 
-    const newFavorite = await FavoriteRecipe.create(favoriteData);
+    const newFavorite = await FavoriteVeganRecipe.create(favoriteData);
     console.log("New favorite created successfully:", newFavorite._id);
 
     return NextResponse.json({ 
@@ -112,7 +112,7 @@ export async function GET() {
   
       await connect()
       
-      const favorites = await FavoriteRecipe.find({ userId }).sort({ createdAt: -1 })
+      const favorites = await FavoriteVeganRecipe.find({ userId }).sort({ createdAt: -1 })
       
       return NextResponse.json({ favorites })
     } catch (error) {

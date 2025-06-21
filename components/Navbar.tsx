@@ -40,7 +40,7 @@ const Navbar = () => {
                   key={href}
                   href={href}
                   className={`${
-                    isActive(href) ? `${bg} text-white font-bold underline italic` : 'text-foreground font-medium'
+                    isActive(href) ? `${bg} text-white font-bold ` : 'text-foreground font-medium'
                   } hover:text-primary hover:bg-primary/10 transition-all duration-200 px-3 py-2 rounded-md text-md`}
                 >
                   {label}
@@ -60,9 +60,9 @@ const Navbar = () => {
               </Link>
             ) : (
               <>
-                <Button className="flex items-center gap-1.5 bg-yellow-400 hover:bg-red-500 text-black font-bold border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
-                  <Heart strokeWidth={2.5} />
-                </Button>
+                <Link href="/favorites" className="mb-1 flex items-center gap-1.5 py-2 px-3 rounded-md bg-yellow-400 hover:bg-red-500 text-black font-bold border-2 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
+                  <Heart strokeWidth={2.5} className='w-5 h-5' />
+                </Link>
                 <UserButton />
               </>
             )}

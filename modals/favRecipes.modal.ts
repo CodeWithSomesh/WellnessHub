@@ -1,6 +1,7 @@
+// modals/favClassicRecipes.modal.ts
 import mongoose from 'mongoose'
 
-const FavoriteRecipeSchema = new mongoose.Schema({
+const FavoriteClassicRecipeSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
@@ -68,9 +69,8 @@ const FavoriteRecipeSchema = new mongoose.Schema({
   timestamps: true
 })
 
-// Compound index to ensure unique recipe per user
-FavoriteRecipeSchema.index({ userId: 1, recipeId: 1 }, { unique: true })
+FavoriteClassicRecipeSchema.index({ userId: 1, recipeId: 1 }, { unique: true })
 
-const FavoriteRecipe = mongoose.models.FavoriteRecipe || mongoose.model('FavoriteRecipe', FavoriteRecipeSchema)
+const FavoriteClassicRecipe = mongoose.models.FavoriteClassicRecipe || mongoose.model('FavoriteClassicRecipe', FavoriteClassicRecipeSchema)
 
-export default FavoriteRecipe
+export default FavoriteClassicRecipe
