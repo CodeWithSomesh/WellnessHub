@@ -211,6 +211,71 @@ export default function FavoritesPage() {
     })
   }
 
+  const CommentSection = ({ 
+    comment, 
+    type, 
+    id, 
+    colorScheme 
+  }: { 
+    comment: string, 
+    type: string, 
+    id: string, 
+    colorScheme: { bg: string, border: string, text: string, icon: string } 
+  }) => {
+    const isEditing = editingComment?.type === type && editingComment?.id === id
+
+    return (
+      <div className={`${colorScheme.bg} ${colorScheme.border} rounded-lg p-3`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <MessageCircle className={`w-4 h-4 ${colorScheme.icon}`} />
+            <span className={`text-sm font-medium ${colorScheme.text}`}>Your Note</span>
+          </div>
+          <div className="flex gap-1">
+            <button
+              onClick={() => startEditing(type, id, comment)}
+              className={`${colorScheme.icon} hover:opacity-70 p-1`}
+            >
+              <Edit3 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        
+        {isEditing ? (
+          <div className="space-y-2">
+            <textarea
+              value={editComment}
+              onChange={(e) => setEditComment(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded text-sm resize-none"
+              rows={3}
+              placeholder="Add your note..."
+            />
+            <div className="flex border-2 border-gray-600 rounded-md">
+              <button
+                onClick={saveComment}
+                className="flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+              >
+                <Save className="w-3 h-3" />
+                Save
+              </button>
+              <button
+                onClick={cancelEditing}
+                className="flex items-center gap-1 bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+              >
+                <X className="w-3 h-3" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className={`text-sm ${colorScheme.text}`}>
+            {comment || 'No note added yet. Click the edit icon to add one!'}
+          </p>
+        )}
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 py-8">
@@ -226,5 +291,5 @@ export default function FavoritesPage() {
     )
   }
 
-  return <div>Favorites Page - CRUD Operations Added</div>
+  return <div>Favorites Page - CommentSection Component Added</div>
 }
