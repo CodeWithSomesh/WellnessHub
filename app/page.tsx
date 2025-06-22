@@ -43,7 +43,7 @@ export default function Home() {
             <p className="text-gray-600 font-medium">Find perfect exercises for every fitness level</p>
           </Link>
 
-          <Link href="/recipes" className="bg-white rounded-md border-4 border-black p-6 hover:bg-amber-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
+          <Link href="/classicRecipes" className="bg-white rounded-md border-4 border-black p-6 hover:bg-amber-200 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-1 hover:-translate-y-1">
             <div className="w-16 h-16 bg-yellow-400 border-4 border-black rounded-full flex items-center justify-center mb-4 mx-auto">
               <Coffee className="w-8 h-8 text-black" />
             </div>
