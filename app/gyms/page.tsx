@@ -690,7 +690,7 @@ export default function GymsPage() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
+        <div className="mb-8 bg-white rounded-lg shadow-sm p-6 pb-1">
           {/* Search Bar */}
           <div className="mb-4">
             <div className="relative">
@@ -719,7 +719,7 @@ export default function GymsPage() {
 
           {/* State Filter Section */}
           {showFilters && (
-            <div className="mb-8">
+            <div className="mb-2">
               <div className="flex flex-wrap gap-2">
                 {malaysian_states.map((state) => (
                   <button

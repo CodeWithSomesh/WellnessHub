@@ -3,9 +3,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
-import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Heart, MessageSquare, X, Search, Filter } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
+import { Target, Dumbbell, User, ScrollText, MessageSquare, Heart, ChevronLeft, ChevronRight, Search, Filter, X } from 'lucide-react'
 
 // Define the exercise type
 interface Exercise {
@@ -329,7 +328,7 @@ export default function WorkoutsPage() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
+        <div className="mb-8 bg-white rounded-lg shadow-sm p-6 pb-1">
           {/* Search Bar */}
           <div className="mb-4">
             <div className="relative">
@@ -345,7 +344,7 @@ export default function WorkoutsPage() {
           </div>
 
           {/* Filter Toggle */}
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -358,7 +357,7 @@ export default function WorkoutsPage() {
 
           {/* Filter Section */}
           {showFilters && (
-            <div className="">
+            <div className="mb-2">
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handleBodyPartChange('')}
@@ -409,58 +408,107 @@ export default function WorkoutsPage() {
         )}
 
         {/* Exercises Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {filteredExercises.map((exercise) => (
-            <div key={exercise.id} className="bg-yellow-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
-              {/* Heart Icon */}
+            <div key={exercise.id} className="bg-gradient-to-br from-yellow-50 to-yellow-100 relative rounded-xl overflow-hidden border-4 border-black hover:border-[#D433F8] shadow-[6px_6px_0px_0px_#000] hover:shadow-[6px_6x_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200">
+              {/* Heart Icon with enhanced styling */}
               <button
                 onClick={() => handleHeartClick(exercise)}
-                className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-sm transition-all ${
+                className={`absolute top-3 right-3 z-20 p-2 rounded-full backdrop-blur-md border-2 transition-all duration-200 ${
                   isFavorited(exercise.id)
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+                    ? 'bg-red-500 border-red-600 text-white hover:bg-red-600 shadow-lg'
+                    : 'bg-white/90 border-3 border-purple-400  text-gray-600 hover:bg-white hover:text-red-500 hover:border-red-200 shadow-md'
                 }`}
               >
                 <Heart 
                   size={20} 
-                  className={isFavorited(exercise.id) ? 'fill-current' : ''} 
+                  className={`${isFavorited(exercise.id) ? 'fill-current' : ''} transition-transform hover:scale-110`} 
                 />
               </button>
               
-              <div className="relative h-72 w-full">
-                <Image
+              {/* Image section */}
+              <div className="relative h-96 w-full overflow-hidden">
+                <img
                   src={exercise.gifUrl}
                   alt={exercise.name}
-                  fill
-                  className="object-cover"
-                  unoptimized // Since these are GIFs from external API
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <div className="p-4 border-t-2 border-amber-300">
-                <h3 className="font-bold text-lg lg:text-xl text-gray-800 capitalize mb-4">
+
+              {/* Content section with enhanced layout */}
+              <div className="p-4 border-t-4 border-amber-300 space-y-3">
+                {/* Exercise name */}
+                <h3 className="font-bold text-lg text-gray-800 capitalize leading-tight mb-3">
                   {exercise.name}
                 </h3>
-                <div className="space-y-1 text-sm text-gray-600 mb-5">
-                  <p className='capitalize'><span className="font-medium">Target:</span> {exercise.target}</p>
-                  <p className='capitalize'><span className="font-medium">Body Part:</span> {exercise.bodyPart}</p>
-                  <p className='capitalize'><span className="font-medium">Equipment:</span> {exercise.equipment}</p>
+                {/* Tags section with icons */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex items-center space-x-1 bg-white/80 px-2 py-1 rounded-full border border-gray-300 shadow-sm">
+                    <Target size={14} className="text-red-500" />
+                    <span className="text-sm font-medium text-gray-700 capitalize">{exercise.target}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 bg-white/80 px-2 py-1 rounded-full border border-gray-300 shadow-sm">
+                    <User size={14} className="text-blue-500" />
+                    <span className="text-sm font-medium text-gray-700 capitalize">{exercise.bodyPart}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 bg-white/80 px-2 py-1 rounded-full border border-gray-300 shadow-sm">
+                    <Dumbbell size={14} className="text-green-500" />
+                    <span className="text-sm font-medium text-gray-700 capitalize">{exercise.equipment}</span>
+                  </div>
                 </div>
-                {exercise.instructions && exercise.instructions.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm font-bold underline text-gray-700 mb-1">Instructions:</p>
-                    <p className="text-xs text-gray-600 line-clamp-3 text-justify">
-                      {exercise.instructions[0]}
-                    </p>
+
+                {/* Secondary muscles if available */}
+                {exercise.secondaryMuscles && exercise.secondaryMuscles.length > 0 && (
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border border-purple-200 mb-3">
+                    <h4 className="text-sm font-bold text-purple-700 mb-2 flex items-center">
+                      <Target size={12} className="mr-1" />
+                      Secondary Muscles:
+                    </h4>
+                    <div className="flex flex-wrap gap-1">
+                      {exercise.secondaryMuscles.map((muscle, index) => (
+                        <span key={index} className="text-sm bg-white text-purple-800 px-2 py-0.5 rounded-full border border-purple-200 capitalize">
+                          {muscle}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {/* Show comment if favorited */}
+
+                {/* Full instructions section */}
+                {exercise.instructions && exercise.instructions.length > 0 && (
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200 mb-3">
+                    <div className="flex items-center mb-2">
+                      <ScrollText size={16} className="text-blue-600 mr-2" />
+                      <h4 className="text-sm font-bold text-blue-700">Instructions:</h4>
+                    </div>
+                    <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                      {exercise.instructions.map((instruction, index) => (
+                        <div key={index} className="flex items-start space-x-2">
+                          <span className="flex-shrink-0 w-5 h-5 bg-blue-500 text-white text-sm font-bold rounded-full flex items-center justify-center mt-0.5">
+                            {index + 1}
+                          </span>
+                          <p className="text-sm text-blue-800 leading-relaxed font-medium">
+                            {instruction}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Enhanced comment section */}
                 {isFavorited(exercise.id) && getFavoriteData(exercise.id)?.comment && (
-                  <div className="mt-3 p-2 bg-blue-50 rounded-lg border-2 border-gray-400">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200 shadow-inner">
                     <div className="flex items-start space-x-2">
-                      <MessageSquare size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-blue-800 line-clamp-5">
-                        {getFavoriteData(exercise.id)?.comment}
-                      </p>
+                      <div className="flex-shrink-0 p-1.5 bg-green-500 text-white rounded-full">
+                        <MessageSquare size={14} />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-green-700 mb-1">Your Note:</h4>
+                        <p className="text-sm text-green-800 leading-relaxed font-medium">
+                          {getFavoriteData(exercise.id)?.comment}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}

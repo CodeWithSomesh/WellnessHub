@@ -440,7 +440,7 @@ export default function RecipesPage() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
+        <div className="mb-8 bg-white rounded-lg shadow-sm p-6 pb-1">
           {/* Search Bar */}
           <div className="mb-4">
             <div className="relative">
@@ -469,7 +469,7 @@ export default function RecipesPage() {
 
           {/* Difficulty Filters */}
           {showFilters && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-2">
               <button
                 onClick={() => handleCategoryChange('')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -530,7 +530,7 @@ export default function RecipesPage() {
         {/* Recipes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {filteredRecipes.map((recipe) => (
-            <div key={recipe.id} className="bg-white relative rounded-2xl overflow-hidden border-4 border-black hover:border-green-600 shadow-[6px_6px_0px_0px_#000] hover:shadow-[3px_3px_0px_0px_#16a34a] hover:translate-x-[3px] hover:translate-y-[3px] transition-all duration-300 group">
+            <div key={recipe.id} className="bg-white relative rounded-2xl overflow-hidden border-4 border-black hover:border-[#33f875] shadow-[6px_6px_0px_0px_#000] hover:shadow-[3px_3px_0px_0px_#33f875] hover:translate-x-[3px] hover:translate-y-[3px] transition-all duration-300 group">
               {/* Heart Icon with enhanced styling */}
               <button
                 onClick={() => handleHeartClick(recipe)}
@@ -571,7 +571,7 @@ export default function RecipesPage() {
               {/* Content Container */}
               <div className="p-5 bg-gradient-to-br from-green-50 to-white">
                 {/* Title */}
-                <h3 className="font-bold text-xl text-gray-800 mb-3 line-clamp-2 leading-tight">
+                <h3 className="font-bold text-xl text-gray-800 mb-3 line-clamp- leading-tight">
                   {recipe.title}
                 </h3>
                 
@@ -608,7 +608,7 @@ export default function RecipesPage() {
 
                 {/* Description */}
                 {recipe.description && (
-                  <div className="mb-4">
+                  <div className="mb-">
                     <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
                       {recipe.description}
                     </p>

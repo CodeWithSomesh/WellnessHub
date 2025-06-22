@@ -401,7 +401,7 @@ export default function RecipesPage() {
             <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 text-amber-300 hover:text-amber-700"
+              className="flex items-center space-x-2 text-amber-300 hover:text-amber-600"
             >
               <Filter size={18} />
               <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
