@@ -577,7 +577,7 @@ export default function RecipesPage() {
             <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedTag.replace(/_/g, ' ')}</span></p>
           )}
           {searchTerm && (
-            <p className="text-sm mt-1">Search: "<span className="font-medium">{searchTerm}</span>"</p>
+            <p className="text-sm mt-1">Search: &quot;<span className="font-medium">{searchTerm}</span>&quot;</p>
           )}
         </div>
 
