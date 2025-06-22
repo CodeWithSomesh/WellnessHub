@@ -297,35 +297,58 @@ export default function FavoritesPage() {
   }
 
   const WorkoutCard = ({ workout }: { workout: FavoriteWorkout }) => (
-    <div className="bg-white border-4 border-black rounded-lg p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#D433F8] border-2 border-black rounded-lg p-3">
-            <Dumbbell className="w-6 h-6 text-white" />
-          </div>
-          <div className='mr-4'>
-            <h3 className="text-xl font-bold text-gray-800 capitalize">{workout.exerciseName}</h3>
-            <p className="text-gray-600 capitalize">{workout.target} • {workout.bodyPart}</p>
+    <div className="bg-white border-4 border-black rounded-lg p-4 sm:p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
+      <div className="mb-4">
+        {/* Mobile: Buttons at top */}
+        <div className="flex justify-end mb-3 sm:hidden">
+          <div className="flex border-2 border-gray-600 rounded-md">
+            <button
+              onClick={() => startEditing('workout', workout._id, workout.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => removeFavorite('workout', workout._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
-        <div className="flex border-2 border-gray-600 rounded-md">
-          <button
-            onClick={() => startEditing('workout', workout._id, workout.comment)}
-            className="text-white bg-blue-500 p-2 border-r-2 border-gray-600  cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
-          >
-            <Edit3 className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => removeFavorite('workout', workout._id)}
-            className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+
+        {/* Content row */}
+        <div className="flex justify-between items-start">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="bg-[#D433F8] border-2 border-black rounded-lg p-2 sm:p-3 flex-shrink-0">
+              <Dumbbell className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 capitalize leading-tight break-words">{workout.exerciseName}</h3>
+              <p className="text-gray-600 capitalize break-words">{workout.target} • {workout.bodyPart}</p>
+            </div>
+          </div>
+          
+          {/* Desktop: Buttons on the right */}
+          <div className="hidden sm:flex border-2 border-gray-600 rounded-md flex-shrink-0">
+            <button
+              onClick={() => startEditing('workout', workout._id, workout.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => removeFavorite('workout', workout._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
       {workout.gifUrl && (
-        <div className="mb-4 border-2 border-black rounded-lg overflow-hidden relative h-[480px] w-full">
+        <div className="mb-4 border-2 border-black rounded-lg overflow-hidden relative h-64 sm:h-[480px] w-full">
           <Image 
             unoptimized
             fill
@@ -337,9 +360,9 @@ export default function FavoritesPage() {
       )}
 
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="bg-yellow-200 border border-black px-3 py-1 rounded-full font-medium capitalize">
-            {workout.equipment}
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
+          <span className="bg-yellow-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium capitalize whitespace-nowrap">
+            <span className="truncate">{workout.equipment}</span>
           </span>
         </div>
 
@@ -347,7 +370,7 @@ export default function FavoritesPage() {
           <div>
             <button
               onClick={() => toggleExpanded(workout._id)}
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 mb-2"
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 mb-2 break-words"
             >
               {expandedCards.has(workout._id) ? 'Hide Instructions' : 'Show Instructions'}
             </button>
@@ -355,8 +378,8 @@ export default function FavoritesPage() {
               <ul className="text-sm text-gray-700 space-y-1 bg-gray-50 border border-gray-200 rounded p-3">
                 {workout.instructions.map((instruction, index) => (
                   <li key={index} className="flex gap-2">
-                    <span className="text-purple-600 font-medium">{index + 1}.</span>
-                    <span>{instruction}</span>
+                    <span className="text-purple-600 font-medium flex-shrink-0">{index + 1}.</span>
+                    <span className="break-words">{instruction}</span>
                   </li>
                 ))}
               </ul>
@@ -376,7 +399,7 @@ export default function FavoritesPage() {
           }}
         />
 
-        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200 break-words">
           Added on {formatDate(workout.createdAt)}
         </div>
       </div>
@@ -384,61 +407,77 @@ export default function FavoritesPage() {
   )
 
   const RecipeCard = ({ recipe }: { recipe: FavoriteRecipe }) => (
-    <div className="bg-white border-4 border-black rounded-lg p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-amber-400 border-2 border-black rounded-lg p-3">
-            <Utensils className="w-6 h-6 text-white" />
-          </div>
-          <div className='mr-4'>
-            <h3 className="text-xl font-bold text-gray-800 capitalize">{recipe.recipeName}</h3>
-            <p className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <strong>Total Prep Time:</strong> 
-              {recipe.totalTime} min
-            </p>
-            
+    <div className="bg-white border-4 border-black rounded-lg p-4 sm:p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
+      <div className="mb-4">
+        {/* Mobile: Buttons at top */}
+        <div className="flex justify-end mb-3 sm:hidden">
+          <div className="flex border-2 border-gray-600 rounded-md">
+            <button
+              onClick={() => startEditing('recipe', recipe._id, recipe.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => removeFavorite('recipe', recipe._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
-        <div className="flex border-2 border-gray-600 rounded-md">
-          <button
-            onClick={() => startEditing('recipe', recipe._id, recipe.comment)}
-            className="text-white bg-blue-500 p-2 border-r-2 border-gray-600  cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
-          >
-            <Edit3 className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => removeFavorite('recipe', recipe._id)}
-            className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+
+        {/* Content row */}
+        <div className="flex justify-between items-start">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="bg-amber-400 border-2 border-black rounded-lg p-2 sm:p-3 flex-shrink-0">
+              <Utensils className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 capitalize leading-tight break-words">{recipe.recipeName}</h3>
+              <p className="flex items-center gap-1 text-sm break-words">
+                <Clock className="w-4 h-4 flex-shrink-0" />
+                <strong>Total Prep Time:</strong> 
+                {recipe.totalTime} min
+              </p>
+            </div>
+          </div>
+          
+          {/* Desktop: Buttons on the right */}
+          <div className="hidden sm:flex border-2 border-gray-600 rounded-md flex-shrink-0">
+            <button
+              onClick={() => startEditing('recipe', recipe._id, recipe.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => removeFavorite('recipe', recipe._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
       {recipe.thumbnailUrl && (
-        <div className="mb-4 border-2 border-black rounded-lg overflow-hidden relative h-96 w-full">
+        <div className="mb-4 border-2 border-black rounded-lg overflow-hidden relative h-48 sm:h-96 w-full">
           <Image
             fill
             src={recipe.thumbnailUrl} 
             alt={recipe.recipeName}
-            className="w-full h-48 object-cover"
+            className="object-cover"
           />
         </div>
       )}
 
       <div className="space-y-3">
-        <div className="flex gap-2 text-sm">
-          {/* {recipe.prepTime > 0 && (
-            <span className="bg-yellow-200 border border-black px-3 py-1 rounded-full font-medium flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {recipe.prepTime}min prep
-            </span>
-          )} */}
+        <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
           {recipe.servings > 0 && (
-            <span className="bg-blue-200 border border-black px-3 py-1 rounded-full font-medium flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              {recipe.servings} servings
+            <span className="bg-blue-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
+              <Users className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{recipe.servings} servings</span>
             </span>
           )}
         </div>
@@ -446,20 +485,17 @@ export default function FavoritesPage() {
         {recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {recipe.tags.map((tag, index) => (
-              <span key={index} className="bg-pink-200 border capitalize border-black px-2 py-1 rounded text-xs font-medium">
-                {tag.replace(/_/g, ' ')}
+              <span key={index} className="bg-pink-200 border capitalize border-black px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+                <span className="truncate">{tag.replace(/_/g, ' ')}</span>
               </span>
             ))}
-            {/* {recipe.tags.length > 3 && (
-              <span className="text-xs text-gray-500 flex items-center">+{recipe.tags.length - 3} more</span>
-            )} */}
           </div>
         )}
 
         <div>
           <button
             onClick={() => toggleExpanded(recipe._id)}
-            className="text-sm font-medium text-green-600 hover:text-green-800 mb-2"
+            className="text-sm font-medium text-green-600 hover:text-green-800 mb-2 break-words"
           >
             {expandedCards.has(recipe._id) ? 'Hide Description' : 'Show Description'}
           </button>
@@ -467,7 +503,7 @@ export default function FavoritesPage() {
             <div className="space-y-3 bg-gray-50 border border-gray-200 rounded p-3">
               <div className="text-sm text-gray-700">
                 {recipe.description && (
-                  <p className="text-gray-600 text-sm">{recipe.description}</p>
+                  <p className="text-gray-600 text-sm break-words">{recipe.description}</p>
                 )}
               </div>
             </div>
@@ -486,7 +522,7 @@ export default function FavoritesPage() {
           }}
         />
 
-        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200 break-words">
           Added on {formatDate(recipe.createdAt)}
         </div>
       </div>
@@ -494,81 +530,100 @@ export default function FavoritesPage() {
   )
 
   const VeganRecipeCard = ({ recipe }: { recipe: FavoriteVeganRecipe }) => (
-    <div className="bg-white border-4 border-black rounded-lg p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-emerald-500 border-2 border-black rounded-lg p-3">
-            <Leaf className="w-6 h-6 text-white" />
-          </div>
-          <div className='mr-4'>
-            <h3 className="text-xl font-bold text-gray-800 capitalize">{recipe.recipeName}</h3>
-            {recipe.description && (
-              <p className="text-gray-600 text-sm">{recipe.description.slice(0, 100)}...</p>
-            )}
+    <div className="bg-white border-4 border-black rounded-lg p-4 sm:p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
+      <div className="mb-4">
+        {/* Mobile: Buttons at top */}
+        <div className="flex justify-end mb-3 sm:hidden">
+          <div className="flex border-2 border-gray-600 rounded-md">
+            <button
+              onClick={() => startEditing('veganRecipe', recipe._id, recipe.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => removeFavorite('veganRecipe', recipe._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
-        <div className="flex border-2 border-gray-600 rounded-md">
-          <button
-            onClick={() => startEditing('veganRecipe', recipe._id, recipe.comment)}
-            className="text-white bg-blue-500 p-2 border-r-2 border-gray-600  cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
-          >
-            <Edit3 className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => removeFavorite('veganRecipe', recipe._id)}
-            className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+
+        {/* Content row */}
+        <div className="flex justify-between items-start">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="bg-emerald-500 border-2 border-black rounded-lg p-2 sm:p-3 flex-shrink-0">
+              <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 capitalize leading-tight break-words">{recipe.recipeName}</h3>
+              {recipe.description && (
+                <p className="text-gray-600 text-sm break-words">{recipe.description.slice(0, 100)}...</p>
+              )}
+            </div>
+          </div>
+          
+          {/* Desktop: Buttons on the right */}
+          <div className="hidden sm:flex border-2 border-gray-600 rounded-md flex-shrink-0">
+            <button
+              onClick={() => startEditing('veganRecipe', recipe._id, recipe.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => removeFavorite('veganRecipe', recipe._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
       {recipe.image && (
-        <div className="mb-4 border-2 border-black rounded-lg overflow-hidden relative h-96 w-full">
+        <div className="mb-4 border-2 border-black rounded-lg overflow-hidden relative h-48 sm:h-96 w-full">
           <Image 
             unoptimized
             fill
             src={recipe.image} 
             alt={recipe.recipeName}
-            className="w-full h-48 object-cover"
+            className="object-cover"
           />
         </div>
       )}
 
       <div className="space-y-3">
-        <div className="flex gap-2 text-sm">
+        <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
           {recipe.time && (
-            <span className="bg-yellow-200 border border-black px-3 py-1 rounded-full font-medium flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {recipe.time}
+            <span className="bg-yellow-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
+              <Clock className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{recipe.time}</span>
             </span>
           )}
           {recipe.portion && (
-            <span className="bg-blue-200 border border-black px-3 py-1 rounded-full font-medium flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              {recipe.portion}
+            <span className="bg-blue-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
+              <Users className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{recipe.portion}</span>
             </span>
           )}
           {recipe.difficulty && (
-            <span className="bg-orange-200 border border-black px-3 py-1 rounded-full font-medium">
-              {recipe.difficulty}
+            <span className="bg-orange-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium whitespace-nowrap">
+              <span className="truncate">{recipe.difficulty}</span>
             </span>
           )}
-          <div className="flex items-center gap-2">
-            <span className="bg-emerald-200 border border-black px-3 py-1 rounded-full font-medium flex items-center gap-1">
-              <Leaf className="w-3 h-3" />
-              Vegan
-            </span>
-          </div>
+          <span className="bg-emerald-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
+            <Leaf className="w-3 h-3 flex-shrink-0" />
+            <span>Vegan</span>
+          </span>
         </div>
-
-        
 
         {recipe.ingredients && recipe.ingredients.length > 0 && (
           <div>
             <button
               onClick={() => toggleExpanded(recipe._id)}
-              className="text-sm font-medium text-emerald-600 hover:text-emerald-800 mb-2"
+              className="text-sm font-medium text-emerald-600 hover:text-emerald-800 mb-2 break-words"
             >
               {expandedCards.has(recipe._id) ? 'Hide Ingredients' : 'Show Ingredients'}
             </button>
@@ -578,7 +633,7 @@ export default function FavoritesPage() {
                   <h4 className="font-medium text-gray-800 mb-2">Ingredients:</h4>
                   <ul className="text-sm text-gray-700 space-y-1">
                     {recipe.ingredients.slice(0, 5).map((ingredient, index) => (
-                      <li key={index}>• {ingredient}</li>
+                      <li key={index} className="break-words">• {ingredient}</li>
                     ))}
                     {recipe.ingredients.length > 5 && (
                       <li className="text-gray-500">+{recipe.ingredients.length - 5} more ingredients</li>
@@ -602,7 +657,7 @@ export default function FavoritesPage() {
           }}
         />
 
-        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200 break-words">
           Added on {formatDate(recipe.createdAt)}
         </div>
       </div>
@@ -610,30 +665,53 @@ export default function FavoritesPage() {
   )
 
   const GymCard = ({ gym }: { gym: FavoriteGym }) => (
-    <div className="bg-white border-4 border-black rounded-lg p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-cyan-400 border-2 border-black rounded-lg p-3">
-            <MapPin className="w-6 h-6 text-white" />
-          </div>
-          <div className='mr-4'>
-            <h3 className="text-xl font-bold text-gray-800 capitalize">{gym.gymName}</h3>
-            <p className="text-gray-600 text-sm">{gym.address}</p>
+    <div className="bg-white border-4 border-black rounded-lg p-4 sm:p-6 shadow-[8px_8px_0px_0px_#000] hover:shadow-[12px_12px_0px_0px_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
+      <div className="mb-4">
+        {/* Mobile: Buttons at top */}
+        <div className="flex justify-end mb-3 sm:hidden">
+          <div className="flex border-2 border-gray-600 rounded-md">
+            <button
+              onClick={() => startEditing('gym', gym._id, gym.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => removeFavorite('gym', gym._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
-        <div className="flex border-2 border-gray-600 rounded-md">
-          <button
-            onClick={() => startEditing('gym', gym._id, gym.comment)}
-            className="text-white bg-blue-500 p-2 border-r-2 border-gray-600  cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
-          >
-            <Edit3 className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => removeFavorite('gym', gym._id)}
-            className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+
+        {/* Content row */}
+        <div className="flex justify-between items-start">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="bg-cyan-400 border-2 border-black rounded-lg p-2 sm:p-3 flex-shrink-0">
+              <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 capitalize leading-tight break-words">{gym.gymName}</h3>
+              <p className="text-gray-600 text-sm break-words">{gym.address}</p>
+            </div>
+          </div>
+          
+          {/* Desktop: Buttons on the right */}
+          <div className="hidden sm:flex border-2 border-gray-600 rounded-md flex-shrink-0">
+            <button
+              onClick={() => startEditing('gym', gym._id, gym.comment)}
+              className="text-white bg-blue-500 p-2 border-r-2 border-gray-600 cursor-pointer hover:bg-blue-800 hover:text-white transition-all duration-200 rounded-l-sm"
+            >
+              <Edit3 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => removeFavorite('gym', gym._id)}
+              className="text-white bg-red-500 p-2 cursor-pointer hover:bg-red-800 hover:text-white transition-all duration-200 rounded-r-sm"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -648,16 +726,16 @@ export default function FavoritesPage() {
       )}
 
       <div className="space-y-3">
-        <div className="flex gap-2 text-sm">
+        <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
           {gym.rating && (
-            <span className="bg-yellow-200 border border-black px-3 py-1 rounded-full font-medium flex items-center gap-1">
-              <Star className="w-3 h-3 fill-current" />
-              {gym.rating}/5
+            <span className="bg-yellow-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
+              <Star className="w-3 h-3 fill-current flex-shrink-0" />
+              <span className="truncate">{gym.rating}/5</span>
             </span>
           )}
           {gym.phoneNumber && (
-            <span className="bg-blue-200 border border-black px-3 py-1 rounded-full font-medium text-xs flex items-center">
-              {gym.phoneNumber}
+            <span className="bg-blue-200 border border-black px-2 sm:px-3 py-1 rounded-full font-medium flex items-center whitespace-nowrap">
+              <span className="truncate text-xs">{gym.phoneNumber}</span>
             </span>
           )}
         </div>
@@ -674,7 +752,7 @@ export default function FavoritesPage() {
           }}
         />
 
-        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+        <div className="text-xs text-gray-500 pt-2 border-t border-gray-200 break-words">
           Added on {formatDate(gym.createdAt)}
         </div>
       </div>
@@ -733,7 +811,7 @@ export default function FavoritesPage() {
             <div className="bg-pink-500 border-4 border-black rounded-full p-4">
               <Heart className="w-8 h-8 text-white fill-current" />
             </div>
-            <h1 className="text-5xl font-black text-gray-800">My Favorites</h1>
+            <h1 className="text-3xl sm:text-5xl font-black text-gray-800">My Favorites</h1>
             <div className="bg-pink-500 border-4 border-black rounded-full p-4">
               <Heart className="w-8 h-8 text-white fill-current" />
             </div>
