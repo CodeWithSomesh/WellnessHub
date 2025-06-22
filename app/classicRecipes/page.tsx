@@ -587,7 +587,7 @@ export default function RecipesPage() {
               </button>
               
               {/* Image Section - Increased height */}
-              <div className="relative h-64 w-full">
+              <div className="relative h-96 w-full">
                 {recipe.thumbnail_url ? (
                   <Image
                     src={recipe.thumbnail_url}

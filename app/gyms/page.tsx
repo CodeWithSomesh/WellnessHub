@@ -761,106 +761,199 @@ export default function GymsPage() {
         )}
 
         {/* Gyms Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-8">
           {filteredGyms.pageFiltered.map((gym, idx) => {
             let photoUrl = '';
 
             if (gym.photos && gym.photos.length > 0) {
-              photoUrl = gym.photos[0].getUrl({ maxWidth: 400 });
+              photoUrl = gym.photos[0].getUrl({ maxWidth: 500 });
             } else if (gym.geometry && gym.geometry.location) {
               const lat = gym.geometry.location.lat();
               const lng = gym.geometry.location.lng();
-              photoUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x300&location=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
+              photoUrl = `https://maps.googleapis.com/maps/api/streetview?size=500x400&location=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
             }
 
             const hoursInfo = formatOpeningHours(gym.opening_hours);
             const openStatus = getOpenStatusForHours(gym);
 
             return (
-              <div key={`${gym.place_id}-${idx}`} className="bg-cyan-50 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-cyan-500 shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#10b981] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150 flex flex-col">
-                {/* Heart Icon */}
+              <div key={`${gym.place_id}-${idx}`} className="bg-gradient-to-br from-cyan-50 to-blue-50 relative rounded-xl overflow-hidden border-4 border-black hover:border-cyan-500 shadow-[6px_6px_0px_0px_#000] hover:shadow-[3px_3px_0px_0px_#00BCD4] hover:translate-x-[3px] hover:translate-y-[3px] transition-all duration-200 flex flex-col group">
+                
+                {/* Heart Icon - Enhanced */}
                 <button
                   onClick={() => handleHeartClick(gym)}
-                  className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-sm transition-all ${
+                  className={`absolute top-4 right-4 z-10 p-3 rounded-full backdrop-blur-md transition-all duration-200 shadow-lg ${
                     gym.place_id && isFavorited(gym.place_id)
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+                      ? 'bg-red-500 text-white hover:bg-red-600 scale-110'
+                      : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500 hover:scale-110'
                   }`}
                 >
                   <Heart 
-                    size={20} 
-                    className={gym.place_id && isFavorited(gym.place_id) ? 'fill-current' : ''} 
+                    size={22} 
+                    className={`${gym.place_id && isFavorited(gym.place_id) ? 'fill-current' : ''} transition-transform duration-200`} 
                   />
                 </button>
 
-                <div className="relative h-72 w-full">
+                {/* Image Section - Enhanced */}
+                <div className="relative h-64 md:h-72 w-full overflow-hidden">
                   {photoUrl ? (
                     <img
                       src={photoUrl}
                       alt={gym.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-                      No photo available
+                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2">🏋️‍♂️</div>
+                        <span className="text-sm font-medium">No photo available</span>
+                      </div>
                     </div>
                   )}
+                  
+                  {/* Status Badge Overlay */}
+                  <div className="absolute top-3 left-3">
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md border-2 ${
+                      openStatus.text === 'Open' 
+                        ? 'bg-green-500/90 text-white border-green-300' 
+                        : openStatus.text === 'Closed'
+                        ? 'bg-red-500/90 text-white border-red-300'
+                        : 'bg-gray-500/90 text-white border-gray-300'
+                    }`}>
+                      {openStatus.text}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="p-4 border-t-2 border-cyan-300 flex-1 flex flex-col">
-                  <h3 className="font-bold text-lg text-gray-800 mb-3 line-clamp-2">
+                {/* Content Section - Enhanced */}
+                <div className="p-6 border-t-4 border-cyan-400 flex-1 flex flex-col bg-white/80 backdrop-blur-sm">
+                  
+                  {/* Gym Name */}
+                  <h3 className="font-bold text-xl text-gray-800 mb-4 line-clamp-2 group-hover:text-cyan-700 transition-colors duration-200">
                     {gym.name}
                   </h3>
-                  <div className="space-y-1 text-sm text-gray-600 mb-5">
-                    <p><span className="font-medium"></span> {gym.formatted_address || 'Address not available'}</p>
-                    <p className="text-gray-600 font-medium">
-                      {gym.formatted_phone_number ? `☎ ${gym.formatted_phone_number}` : 'No phone number'}
+                  
+                  {/* Address - Full width */}
+                  <div className="flex items-start space-x-3 mb-4">
+                    <div className="flex-shrink-0 w-6 h-6 bg-cyan-100 rounded-full flex items-center justify-center mt-0.5">
+                      <span className="text-cyan-600 text-sm">📍</span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed flex-1">
+                      {gym.formatted_address || 'Address not available'}
                     </p>
-                    <p className="text-yellow-600 font-medium">
-                      {gym.rating ? `★ ${gym.rating.toFixed(1)}` : 'No reviews'}
-                    </p>
-                    {/* Opening Hours with integrated Open/Closed status */}
-                    <div>
+                  </div>
+
+                  {/* Info Grid - Responsive Layout */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                    
+                    {/* Phone */}
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-sm">📞</span>
+                      </div>
+                      <p className="text-sm text-gray-700 font-medium truncate">
+                        {gym.formatted_phone_number || 'No phone number'}
+                      </p>
+                    </div>
+
+                    {/* Rating */}
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <span className="text-yellow-600 text-sm">⭐</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {gym.rating ? (
+                          <>
+                            <span className="text-lg font-bold text-yellow-600">
+                              {gym.rating.toFixed(1)}
+                            </span>
+                            <div className="flex space-x-1">
+                              {[...Array(5)].map((_, i) => (
+                                <span 
+                                  key={i} 
+                                  className={`text-sm ${
+                                    i < Math.floor(gym.rating) 
+                                      ? 'text-yellow-500' 
+                                      : i < gym.rating 
+                                      ? 'text-yellow-300' 
+                                      : 'text-gray-300'
+                                  }`}
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-500 italic">No reviews yet</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Opening Hours - Full width */}
+                  <div className="flex items-start space-x-3 mb-6">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                      <Clock size={14} className="text-blue-600" />
+                    </div>
+                    <div className="flex-1">
                       {hoursInfo ? (
-                        <div className="flex items-center justify-between">
-                          {/* Clock and Hours */}
-                          <div className="flex items-center space-x-2">
-                            <Clock size={16} className={`${openStatus.textColor}`} />
-                            <span className={`text-sm font-medium ${openStatus.textColor}`}>Today:</span>
-                            <span className={`text-xs ${openStatus.textColor}`}>
-                              {hoursInfo.todayHours.replace(/^[A-Za-z]+:\s*/, '')}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">Today:</span>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                              openStatus.text === 'Open' 
+                                ? 'bg-green-100 text-green-700' 
+                                : openStatus.text === 'Closed'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {openStatus.text}
                             </span>
                           </div>
-
-                          {/* Open/Closed */}
-                          <div className={`px-2 py-1 rounded text-xs font-semibold ${openStatus.textColor}`}>
-                            {openStatus.text}
-                          </div>
+                          <p className="text-xs text-gray-600">
+                            {hoursInfo.todayHours.replace(/^[A-Za-z]+:\s*/, '')}
+                          </p>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Clock size={16} className="text-gray-400" />
-                            <span className="text-sm text-gray-500">Hours not available</span>
-                          </div>
-                          <div className={`px-2 py-1 rounded text-xs font-semibold ${openStatus.textColor}`}>
+                          <span className="text-sm text-gray-500">Hours not available</span>
+                          <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                            openStatus.text === 'Open' 
+                              ? 'bg-green-100 text-green-700' 
+                              : openStatus.text === 'Closed'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
                             {openStatus.text}
-                          </div>
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Show comment if favorited */}
+                  {/* Comment Section - Enhanced */}
                   {gym.place_id && isFavorited(gym.place_id) && getFavoriteData(gym.place_id)?.comment && (
-                    <div className="p-2 bg-blue-50 rounded-lg border-2 border-gray-400 flex items-start">
-                      <MessageSquare size={16} className="mt-0.5 mr-2 flex-shrink-0" />
-                      <p className="text-sm text-blue-800 line-clamp-3">
-                        {getFavoriteData(gym.place_id)?.comment}
-                      </p>
+                    <div className="mt-auto">
+                      <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-200 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-400"></div>
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                            <MessageSquare size={14} className="text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-blue-800 mb-1">Your Note:</p>
+                            <p className="text-sm text-blue-700 line-clamp-3 leading-relaxed">
+                              {getFavoriteData(gym.place_id)?.comment}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
+                  {/* Hover Effect Indicator */}
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-blue-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
                 </div>
               </div>
             );
