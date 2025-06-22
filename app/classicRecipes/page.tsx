@@ -79,6 +79,21 @@ export default function RecipesPage() {
   const [size] = useState(20) // Limit to 20 recipes per page
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
+  // Add this with your other state declarations (around line 75-85)
+  const [expandedInstructions, setExpandedInstructions] = useState<Set<number>>(new Set())
+
+  // Add this function with your other functions (around line 400-500)
+  const toggleInstructions = (recipeId: number) => {
+    setExpandedInstructions(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(recipeId)) {
+        newSet.delete(recipeId)
+      } else {
+        newSet.add(recipeId)
+      }
+      return newSet
+    })
+  }
 
   // Modal states
   const [showCommentModal, setShowCommentModal] = useState(false)
@@ -472,7 +487,7 @@ export default function RecipesPage() {
         </div>
 
         {/* Search and Filter Section */}
-          <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-8 bg-white rounded-lg shadow-sm p-6 pb-1">
             {/* Search Bar */}
             <div className="mb-4">
               <div className="relative">
@@ -488,11 +503,11 @@ export default function RecipesPage() {
             </div>
   
             {/* Filter Toggle */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-700">Filters</h3>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 text-orange-600 hover:text-orange-700"
+                className="flex items-center space-x-2 text-amber-400 hover:text-amber-600"
               >
                 <Filter size={18} />
                 <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
@@ -501,13 +516,13 @@ export default function RecipesPage() {
 
           {/* Filter Section */}
           {showFilters && (
-            <div className="mb-8">
+            <div className="mb-2">
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handleTagChange('')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedTag === ''
-                      ? 'bg-[#D433F8] text-white'
+                      ? 'bg-amber-300 text-white'
                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                   }`}
                 >
@@ -519,7 +534,7 @@ export default function RecipesPage() {
                     onClick={() => handleTagChange(tag)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
                       selectedTag === tag
-                        ? 'bg-[#D433F8] text-white'
+                        ? 'bg-amber-300 text-white'
                         : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -551,28 +566,28 @@ export default function RecipesPage() {
           </div>
         )}
 
-        {/* Recipes Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-
+        {/* Recipes Grid - Updated for larger cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {filteredRecipes.map((recipe) => (
-            <div key={recipe.id} className="bg-orange-100 relative rounded-lg overflow-hidden font-bold border-4 border-black hover:border-[#D433F8] shadow-[4px_4px_0px_0px_#000] hover:shadow-[2px_2px_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150">
+            <div key={recipe.id} className="bg-orange-100 relative rounded-xl overflow-hidden font-bold border-4 border-black hover:border-amber-300 shadow-[6px_6px_0px_0px_#000] hover:shadow-[3px_3px_0px_0px_#D433FFD54FF8] hover:translate-x-[3px] hover:translate-y-[3px] transition-all duration-200">
               
-                {/* Heart Icon */}
+              {/* Heart Icon */}
               <button
                 onClick={() => handleHeartClick(recipe)}
-                className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-sm transition-all ${
+                className={`absolute top-4 right-4 z-10 p-3 rounded-full backdrop-blur-sm transition-all shadow-lg ${
                   isFavorited(recipe.id)
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-white/80 text-gray-600 hover:bg-white hover:text-red-500'
+                    ? 'bg-red-500 text-white hover:bg-red-600 hover:scale-110'
+                    : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500 hover:scale-110'
                 }`}
               >
                 <Heart 
-                  size={20} 
+                  size={24} 
                   className={isFavorited(recipe.id) ? 'fill-current' : ''} 
                 />
               </button>
               
-              <div className="relative h-48 w-full">
+              {/* Image Section - Increased height */}
+              <div className="relative h-64 w-full">
                 {recipe.thumbnail_url ? (
                   <Image
                     src={recipe.thumbnail_url}
@@ -582,83 +597,229 @@ export default function RecipesPage() {
                     unoptimized
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center">
-                    <ChefHat size={48} className="text-orange-600" />
+                  <div className="w-full h-full bg-gradient-to-br from-orange-200 via-orange-300 to-amber-400 flex items-center justify-center">
+                    <div className="text-center">
+                      <ChefHat size={64} className="text-orange-700 mx-auto mb-2" />
+                      <p className="text-orange-800 font-semibold">No Image Available</p>
+                    </div>
                   </div>
                 )}
+                
+                {/* Gradient overlay for better text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
               
-              {/* making design changes */}
-              <div className="p-4 border-t-2 border-gray-600">
-                <h3 className="font-bold text-lg text-gray-800 mb-3 line-clamp-2">
+              {/* Content Section - Expanded */}
+              <div className="p-6 border-t-4 border-gray-800">
+                {/* Title */}
+                <h3 className="font-bold text-xl text-gray-800 mb-4 leading-tight">
                   {recipe.name}
                 </h3>
                 
-                {/* Recipe Stats */}
-                <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-                  <div className="flex items-center space-x-1">
-                    <Clock size={14} />
-                    <span>{formatTime(recipe.total_time_minutes || recipe.prep_time_minutes)}</span>
+                {/* Recipe Stats - Enhanced with better spacing and icons */}
+                <div className="flex items-center justify-between bg-white/60 rounded-lg p-3 mb-4 border-2 border-gray-300">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <Clock size={16} className="text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium">Cook Time</p>
+                      <p className="text-sm font-bold text-gray-800">
+                        {formatTime(recipe.total_time_minutes || recipe.prep_time_minutes)}
+                      </p>
+                    </div>
                   </div>
+                  
                   {recipe.servings && (
-                    <div className="flex items-center space-x-1">
-                      <Users size={14} />
-                      <span>{recipe.servings} servings</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="p-2 bg-green-100 rounded-full">
+                        <Users size={16} className="text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Serves</p>
+                        <p className="text-sm font-bold text-gray-800">{recipe.servings}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {recipe.nutrition?.calories && (
+                    <div className="flex items-center space-x-2">
+                      <div className="p-2 bg-orange-100 rounded-full">
+                        <span className="text-orange-600 font-bold text-sm">🔥</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Calories</p>
+                        <p className="text-sm font-bold text-gray-800">{recipe.nutrition.calories}</p>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                {/* Main Ingredients */}
-                {getMainIngredients(recipe).length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-xs font-bold text-gray-700 mb-1">Main Ingredients:</p>
-                    <p className="text-xs text-gray-600 line-clamp-2">
-                      {getMainIngredients(recipe).join(', ')}
-                    </p>
-                  </div>
-                )}
-
-                {/* Description */}
+                {/* Description - Full display */}
                 {recipe.description && (
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-600 line-clamp-3">
-                      {recipe.description}
-                    </p>
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                    <div className="flex items-start space-x-2">
+                      <span className="text-lg">📝</span>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {recipe.description}
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Tags */}
-                {recipe.tags && recipe.tags.length > 0 && (
-                  <div className="mb-3">
-                    <div className="flex flex-wrap gap-1">
-                      {recipe.tags.slice(0, 3).map((tag) => (
+                {/* Main Ingredients - Enhanced display */}
+                {getMainIngredients(recipe).length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="text-lg">🥘</span>
+                      <h4 className="text-sm font-bold text-gray-700">Main Ingredients</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {getMainIngredients(recipe).map((ingredient, index) => (
                         <span
-                          key={tag.id}
-                          className="px-2 py-1 bg-blue-200 text-blue-800 text-xs rounded-full"
+                          key={index}
+                          className="px-3 py-1 bg-amber-200 text-amber-800 text-sm rounded-full border-2 border-amber-300 font-medium capitalize"
                         >
-                          {tag.name.replace(/_/g, ' ')}
+                          {ingredient}
                         </span>
                       ))}
-                      {recipe.tags.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-300 text-gray-700 text-xs rounded-full">
-                          +{recipe.tags.length - 3} more
-                        </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Instructions Preview - Show first few steps */}
+                {recipe.instructions && recipe.instructions.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <span className="text-lg">👨‍🍳</span>
+                      <h4 className="text-sm font-bold text-gray-700">Cooking Instructions</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {(expandedInstructions.has(recipe.id) ? recipe.instructions : recipe.instructions.slice(0, 3)).map((instruction, index) => (
+                        <div key={index} className="flex items-start space-x-3 p-3 bg-white/90 rounded-lg border border-gray-200 hover:bg-white transition-colors">
+                          <div className="flex-shrink-0 w-7 h-7 bg-amber-400 text-white text-sm font-bold rounded-full flex items-center justify-center shadow-sm">
+                            {index + 1}
+                          </div>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {instruction.display_text}
+                          </p>
+                        </div>
+                      ))}
+                      {recipe.instructions.length > 3 && (
+                        <div className="text-center pt-2">
+                          <button
+                            onClick={() => toggleInstructions(recipe.id)}
+                            className="text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-full border-2 border-amber-200 transition-all hover:scale-105"
+                          >
+                            {expandedInstructions.has(recipe.id) 
+                              ? `Show Less Steps` 
+                              : `Show ${recipe.instructions.length - 3} More Steps`
+                            }
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
                 )}
 
-                {/* Show comment if favorited */}
-                {isFavorited(recipe.id) && getFavoriteData(recipe.id)?.comment && (
-                  <div className="mt-3 p-2 bg-blue-50 rounded-lg border-2 border-gray-400">
-                    <div className="flex items-start space-x-2">
-                      <MessageSquare size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-blue-800 line-clamp-3">
-                        {getFavoriteData(recipe.id)?.comment}
-                      </p>
+                {/* Tags - Enhanced display with all tags */}
+                {recipe.tags && recipe.tags.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <span className="text-lg">🏷️</span>
+                      <h4 className="text-sm font-bold text-gray-700">Tags</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {recipe.tags.map((tag) => (
+                        <span
+                          key={tag.id}
+                          className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full border-2 border-blue-200 font-medium hover:bg-blue-200 transition-colors cursor-pointer capitalize"
+                          onClick={() => handleTagChange(tag.name)}
+                        >
+                          {tag.name.replace(/_/g, ' ')}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}
+
+                {/* Nutritional Info - Always show with N/A fallbacks */}
+                <div className="mb-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <span className="text-lg">📊</span>
+                    <h4 className="text-sm font-bold text-gray-700">Nutrition Info</h4>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="bg-red-50 p-2 rounded-lg border border-red-200 text-center">
+                      <p className="text-xs text-red-600 font-medium">Calories</p>
+                      <p className="text-sm font-bold text-red-800">
+                        {recipe.nutrition?.calories || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 p-2 rounded-lg border border-green-200 text-center">
+                      <p className="text-xs text-green-600 font-medium">Protein</p>
+                      <p className="text-sm font-bold text-green-800">
+                        {recipe.nutrition?.protein ? `${recipe.nutrition.protein}g` : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="bg-yellow-50 p-2 rounded-lg border border-yellow-200 text-center">
+                      <p className="text-xs text-yellow-600 font-medium">Carbs</p>
+                      <p className="text-sm font-bold text-yellow-800">
+                        {recipe.nutrition?.carbohydrates ? `${recipe.nutrition.carbohydrates}g` : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="bg-purple-50 p-2 rounded-lg border border-purple-200 text-center">
+                      <p className="text-xs text-purple-600 font-medium">Fat</p>
+                      <p className="text-sm font-bold text-purple-800">
+                        {recipe.nutrition?.fat ? `${recipe.nutrition.fat}g` : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Show comment if favorited - Enhanced */}
+                {isFavorited(recipe.id) && getFavoriteData(recipe.id)?.comment && (
+                  <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200 shadow-sm">
+                    <div className="flex items-start space-x-3">
+                      <div className="p-2 bg-blue-100 rounded-full">
+                        <MessageSquare size={16} className="text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h5 className="text-sm font-bold text-blue-800 mb-1">Your Personal Note</h5>
+                        <p className="text-sm text-blue-700 leading-relaxed">
+                          &quot;{getFavoriteData(recipe.id)?.comment}&quot;
+                        </p>
+                        <p className="text-xs text-blue-500 mt-2 italic">
+                          Added on {new Date(getFavoriteData(recipe.id)?.createdAt || '').toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Button */}
+                <div className="mt-6 pt-4 border-t-2 border-gray-200">
+                  <button
+                    onClick={() => handleHeartClick(recipe)}
+                    className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all transform hover:scale-105 shadow-lg ${
+                      isFavorited(recipe.id)
+                        ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600'
+                        : 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600'
+                    }`}
+                  >
+                    {isFavorited(recipe.id) ? (
+                      <span className="flex items-center justify-center space-x-2">
+                        <Heart size={18} className="fill-current" />
+                        <span>Edit Favorite</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center space-x-2">
+                        <Heart size={18} />
+                        <span>Add to Favorites</span>
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -680,7 +841,7 @@ export default function RecipesPage() {
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               currentPage === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-amber-300 text-white hover:bg-amber-500'
             }`}
           >
             <ChevronLeft />
@@ -690,7 +851,7 @@ export default function RecipesPage() {
           </span>
           <button
             onClick={handleNextPage}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 rounded-lg bg-amber-300 text-white font-medium hover:bg-amber-500 transition-colors"
           >
             <ChevronRight />
           </button>
@@ -768,7 +929,7 @@ export default function RecipesPage() {
                 <button
                   onClick={addToFavorites}
                   disabled={isUpdating}
-                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-amber-300 text-white py-2 px-4 rounded-lg hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdating ? 'Adding...' : 'Add to Favorites'}
                 </button>
