@@ -113,7 +113,7 @@ export default function RecipesPage() {
         url: 'https://tasty.p.rapidapi.com/recipes/list',
         params,
         headers: {
-          'x-rapidapi-key': '0ec4e2095amsh1c726e3df00bfa6p12aac3jsnecd514c6e9e6',
+          'x-rapidapi-key': '96158a4a19msh3fb595b7d64c176p14278ejsn27637bfd3c43',
           'x-rapidapi-host': 'tasty.p.rapidapi.com'
         }
       }
