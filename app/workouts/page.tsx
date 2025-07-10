@@ -409,7 +409,7 @@ export default function WorkoutsPage() {
 
         {/* Exercises Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {filteredExercises.map((exercise) => (
+          {filteredExercises.slice(currentPage * limit, (currentPage + 1) * limit).map((exercise) => (
             <div key={exercise.id} className="bg-gradient-to-br from-yellow-50 to-yellow-100 relative rounded-xl overflow-hidden border-4 border-black hover:border-[#D433F8] shadow-[6px_6px_0px_0px_#000] hover:shadow-[6px_6x_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200">
               {/* Heart Icon with enhanced styling */}
               <button
