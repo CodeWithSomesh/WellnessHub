@@ -876,7 +876,7 @@ export default function RecipesPage() {
             </p>
           )}
           {searchTerm && (
-            <p className="text-sm mt-1">Search: <span className="font-medium">"{searchTerm}"</span></p>
+            <p className="text-sm mt-1">Search: <span className="font-medium">searchTerm</span></p>
           )}
         </div>
 
