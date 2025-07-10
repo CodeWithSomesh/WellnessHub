@@ -78,6 +78,7 @@ export default function GymsPage() {
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [selectedState, setSelectedState] = useState('Penang');
   const [showFilters, setShowFilters] = useState(false)
+  const [gymsByState, setGymsByState] = useState<{ [key: string]: Gym[] }>({});
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(0);
@@ -390,9 +391,41 @@ export default function GymsPage() {
   const searchGyms = (state: string) => {
     setLoading(true);
     setError('');
-    setGyms([]);
     setCurrentPage(0); // Reset UI pagination
 
+    // If "All" is selected, combine all previously fetched state data
+    if (state === 'All') {
+      const allGyms: Gym[] = [];
+      const seenPlaceIds = new Set<string>();
+      
+      // Combine gyms from all states
+      Object.values(gymsByState).forEach(stateGyms => {
+        stateGyms.forEach(gym => {
+          if (gym.place_id && !seenPlaceIds.has(gym.place_id)) {
+            seenPlaceIds.add(gym.place_id);
+            allGyms.push(gym);
+          }
+        });
+      });
+      
+      // Sort alphabetically
+      allGyms.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      );
+      
+      setGyms(allGyms);
+      setLoading(false);
+      return;
+    }
+
+    // If we already have data for this state, use it
+    if (gymsByState[state]) {
+      setGyms(gymsByState[state]);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise, fetch new data for this state
     const allGyms: Gym[] = [];
     const seenPlaceIds = new Set<string>();
 
@@ -401,7 +434,7 @@ export default function GymsPage() {
       const map = new window.google.maps.Map(dummyMap);
       const service = new window.google.maps.places.PlacesService(map);
 
-      const query = state === 'All' ? 'gym in Malaysia' : `gym in ${state}, Malaysia`;
+      const query = `gym in ${state}, Malaysia`;
       const request = {
         query,
         type: 'gym',
@@ -409,8 +442,7 @@ export default function GymsPage() {
 
       const fetchResults = (results: any[], status: string, pagination?: any) => {
         if (status !== window.google.maps.places.PlacesServiceStatus.OK || !results) {
-          const locationText = state === 'All' ? 'Malaysia' : state;
-          setError(`Failed to fetch gyms in ${locationText}`);
+          setError(`Failed to fetch gyms in ${state}`);
           setLoading(false);
           return;
         }
@@ -428,6 +460,13 @@ export default function GymsPage() {
                 allGyms.sort((a, b) =>
                   a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
                 );
+                
+                // Store the results for this state
+                setGymsByState(prev => ({
+                  ...prev,
+                  [state]: allGyms
+                }));
+                
                 setGyms(allGyms);
                 setLoading(false);
               }
@@ -490,6 +529,13 @@ export default function GymsPage() {
                     allGyms.sort((a, b) =>
                       a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
                     );
+                    
+                    // Store the results for this state
+                    setGymsByState(prev => ({
+                      ...prev,
+                      [state]: allGyms
+                    }));
+                    
                     setGyms(allGyms);
                     setLoading(false);
                   }
@@ -498,7 +544,6 @@ export default function GymsPage() {
             );
           } catch (error: any) {
             console.error('Error fetching gym details:', error);
-            const locationText = state === 'All' ? 'Malaysia' : state;
 
             if (error.response?.status === 429) {
               setError('Too many requests. Please try again in a moment.');
@@ -507,7 +552,7 @@ export default function GymsPage() {
             } else if (error.code === 'NETWORK_ERROR') {
               setError('Network error. Please check your connection.');
             } else {
-              setError(`Failed to fetch gyms in ${locationText}. Please try again.`);
+              setError(`Failed to fetch gyms in ${state}. Please try again.`);
             }
 
             setLoading(false);
@@ -534,7 +579,6 @@ export default function GymsPage() {
       }
     } catch (error: any) {
       console.error('Error initializing Google Maps:', error);
-      const locationText = state === 'All' ? 'Malaysia' : state;
 
       if (error.response?.status === 429) {
         setError('Too many requests. Please try again in a moment.');
@@ -543,13 +587,13 @@ export default function GymsPage() {
       } else if (error.code === 'NETWORK_ERROR') {
         setError('Network error. Please check your connection.');
       } else {
-        setError(`Failed to search gyms in ${locationText}.`);
+        setError(`Failed to search gyms in ${state}.`);
       }
 
       setLoading(false);
     }
   };
-
+  
   // Handle state change
   const handleStateChange = (state: string) => {
     setSelectedState(state);

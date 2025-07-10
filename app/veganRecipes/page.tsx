@@ -42,7 +42,7 @@ interface FavoriteVeganRecipe {
 const API_CONFIG = {
   baseURL: 'https://the-vegan-recipes-db.p.rapidapi.com/',
   headers: {
-    'x-rapidapi-key': '8d084e0333msh09b57610e3f7260p111cccjsn2a0ec9764e85',
+    'x-rapidapi-key': '8b4d17b550msh982a8b24ae8e7dfp1bf909jsn98b864509cd0',
     'x-rapidapi-host': 'the-vegan-recipes-db.p.rapidapi.com'
   }
 }
