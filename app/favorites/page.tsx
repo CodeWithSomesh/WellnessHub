@@ -13,6 +13,7 @@ interface FavoriteWorkout {
   bodyPart: string
   equipment: string
   gifUrl: string
+  imageUrl: string
   instructions: string[]
   comment: string
   createdAt: string
@@ -347,12 +348,12 @@ export default function FavoritesPage() {
         </div>
       </div>
 
-      {workout.gifUrl && (
+      {(workout.gifUrl || workout.imageUrl) && (
         <div className="mb-4 border-2 border-black rounded-lg overflow-hidden relative h-64 sm:h-[480px] w-full">
           <Image 
             unoptimized
             fill
-            src={workout.gifUrl} 
+            src={workout.gifUrl || workout.imageUrl} 
             alt={workout.exerciseName}
             className="object-cover"
           />

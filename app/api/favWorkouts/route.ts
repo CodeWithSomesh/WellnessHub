@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
       bodyPart: exercise.bodyPart,
       equipment: exercise.equipment,
       gifUrl: exercise.gifUrl,
+      imageUrl: exercise.imageUrl,
       instructions: exercise.instructions || [],
       comment: comment || '',
     })

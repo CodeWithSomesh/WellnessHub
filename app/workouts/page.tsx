@@ -14,6 +14,7 @@ interface Exercise {
   bodyPart: string
   equipment: string
   gifUrl: string
+  imageUrl?: string
   instructions: string[]
   secondaryMuscles: string[]
 }
@@ -42,11 +43,11 @@ export default function WorkoutsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalExercises, setTotalExercises] = useState(0);
   const [limit] = useState(12) // Limit to 12 Exercises per page
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
+  const [allExercises, setAllExercises] = useState<Exercise[]>([]) // Store all exercises
+  const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]) // Store filtered exercises
 
   // Modal states
   const [showCommentModal, setShowCommentModal] = useState(false)
@@ -56,36 +57,30 @@ export default function WorkoutsPage() {
   const [editingFavorite, setEditingFavorite] = useState<FavoriteWorkout | null>(null)
 
   // Fetch exercises from the API
-  const fetchExercises = async (offset = 0, bodyPartFilter = '') => {
+  const fetchExercises = async () => {
     setLoading(true)
     setError(null)
     
     try {
-      let url = 'https://exercisedb.p.rapidapi.com/exercises'
+      // Fetch both APIs concurrently
+      const [exercisesData, imageExercisesData] = await Promise.all([
+        fetchExerciseData(),
+        fetchImageData()
+      ])
       
-      // If bodyPart filter is selected, use the bodyPart endpoint
-      if (bodyPartFilter) {
-        url = `https://exercisedb.p.rapidapi.com/exercises/bodyPart/${bodyPartFilter}`
-      }
+      console.log(`Total exercises fetched: ${exercisesData.length}`)
+      console.log(`Total imageExercises fetched: ${imageExercisesData.length}`)
 
-      const options = {
-        method: 'GET',
-        url,
-        params: bodyPartFilter ? { limit: limit.toString() } : {
-          limit: limit.toString(),
-          offset: offset.toString()
-        },
-        headers: {
-          'x-rapidapi-key': '8d084e0333msh09b57610e3f7260p111cccjsn2a0ec9764e85',
-          'x-rapidapi-host': 'exercisedb.p.rapidapi.com'
-        }
-      }
-
-      console.log('Making API request to:', url)
-      console.log('With headers:', options.headers)
-
-      const response = await axios.request(options)
-      setExercises(response.data)
+      // Map images to exercises with flexible matching
+      const exercisesWithImages = mapImagesToExercises(exercisesData, imageExercisesData)
+      
+      // Filter out exercises without images
+      const exercisesWithValidImages = exercisesWithImages.filter(exercise => exercise.imageUrl)
+      
+      console.log(`Filtered to ${exercisesWithValidImages.length} exercises with images`)
+      
+      setAllExercises(exercisesWithValidImages)
+      setFilteredExercises(exercisesWithValidImages)
     } catch (err:any) {
       console.error('Error fetching exercises:', err)
       
@@ -102,6 +97,265 @@ export default function WorkoutsPage() {
       setLoading(false)
     }
   }
+
+  // New helper function to fetch main exercise data
+  const fetchExerciseData = async (): Promise<Exercise[]> => {
+    let allFetchedExercises: Exercise[] = []
+    let offset = 0
+    const batchSize = 10
+    let hasMore = true
+    let retryCount = 0
+    const maxRetries = 3
+    const maxExercises = 1000 // Changeable
+    
+    while (hasMore && offset < maxExercises && allFetchedExercises.length < maxExercises) {
+      try {
+        const options = {
+          method: 'GET',
+          url: 'https://exercisedb.p.rapidapi.com/exercises',
+          params: {
+            offset: offset.toString()
+          },
+          headers: {
+            'x-rapidapi-key': '7dc43a793bmsh8b218a395745dfep15d92djsn00d1fef9e6e5',
+            'x-rapidapi-host': 'exercisedb.p.rapidapi.com'
+          },
+          timeout: 10000
+        }
+
+        console.log(`Fetching exercises batch: offset ${offset}`)
+        const response = await axios.request(options)
+        const exercisesData = response.data
+
+        if (exercisesData && exercisesData.length > 0) {
+          // Limit
+          const remainingSlots: number = maxExercises - allFetchedExercises.length
+          const dataToAdd: Exercise[] = exercisesData.slice(0, remainingSlots)
+          
+          allFetchedExercises = [...allFetchedExercises, ...dataToAdd]
+          console.log(`Batch fetched: ${dataToAdd.length} exercises, total: ${allFetchedExercises.length}`)
+          
+          if (exercisesData.length < batchSize || allFetchedExercises.length >= maxExercises) {
+            hasMore = false
+          } else {
+            offset += batchSize
+          }
+          
+          retryCount = 0
+        } else {
+          hasMore = false
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
+      } catch (batchError) {
+        console.error(`Error fetching batch at offset ${offset}:`, batchError)
+        retryCount++
+        
+        if (retryCount >= maxRetries) {
+          console.log(`Max retries reached at offset ${offset}, continuing with ${allFetchedExercises.length} exercises`)
+          hasMore = false
+        } else {
+          console.log(`Retrying batch fetch (attempt ${retryCount + 1}/${maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount))
+        }
+      }
+    }
+    
+    return allFetchedExercises
+  }
+
+  // New helper function to fetch image data
+  const fetchImageData = async (): Promise<any[]> => {
+    let allImageExercises: any[] = []
+    let offset = 0
+    const batchSize = 10
+    let hasMore = true
+    let retryCount = 0
+    const maxRetries = 3
+    const maxExercises = 1000 // Changeable
+    
+    try {
+      while (hasMore && offset < maxExercises && allImageExercises.length < maxExercises) {
+        try {
+          const options = {
+            method: 'GET',
+            url: 'https://exercisedb-api1.p.rapidapi.com/api/v1/exercises',
+            params: {
+              offset: offset.toString()
+            },
+            headers: {
+              'x-rapidapi-key': '7dc43a793bmsh8b218a395745dfep15d92djsn00d1fef9e6e5',
+              'x-rapidapi-host': 'exercisedb-api1.p.rapidapi.com'
+            },
+            timeout: 10000
+          }
+
+          console.log(`Fetching image exercises batch: offset ${offset}`)
+          const response = await axios.request(options)
+          const imageExercises = response.data?.data || response.data
+
+          if (imageExercises && imageExercises.length > 0) {
+            // Limit
+            const remainingSlots: number = maxExercises - allImageExercises.length
+            const dataToAdd: any[] = imageExercises.slice(0, remainingSlots)
+            
+            allImageExercises = [...allImageExercises, ...dataToAdd]
+            console.log(`Batch fetched: ${dataToAdd.length} image exercises, total: ${allImageExercises.length}`)
+            
+            if (imageExercises.length < batchSize || allImageExercises.length >= maxExercises) {
+              hasMore = false
+            } else {
+              offset += batchSize
+            }
+            
+            retryCount = 0
+          } else {
+            hasMore = false
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 200))
+          
+        } catch (batchError) {
+          console.error(`Error fetching image batch at offset ${offset}:`, batchError)
+          retryCount++
+          
+          if (retryCount >= maxRetries) {
+            console.log(`Max retries reached at offset ${offset}, continuing with ${allImageExercises.length} image exercises`)
+            hasMore = false
+          } else {
+            console.log(`Retrying image batch fetch (attempt ${retryCount + 1}/${maxRetries})`)
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount))
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching exercise images:', error)
+    }
+    
+    return allImageExercises
+  }
+
+  // New helper function to map images to exercises
+  const mapImagesToExercises = (exercises: Exercise[], imageExercises: any[]): Exercise[] => {
+    const exercisesWithImages = [...exercises]
+    
+    // Create comprehensive name mapping
+    const imageMap = new Map()
+    
+    imageExercises.forEach((exercise: any) => {
+      if (exercise.imageUrl) {
+        const originalName = exercise.name.toLowerCase().trim()
+        const cleanName = originalName.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim()
+        const normalizedName = originalName.replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
+        
+        imageMap.set(originalName, exercise.imageUrl)
+        imageMap.set(cleanName, exercise.imageUrl)
+        imageMap.set(normalizedName, exercise.imageUrl)
+        
+        const withoutArticles = cleanName.replace(/^(the|a|an)\s+/i, '').trim()
+        if (withoutArticles !== cleanName) {
+          imageMap.set(withoutArticles, exercise.imageUrl)
+        }
+      }
+    })
+
+    console.log("Image mapping created with", imageMap.size, "entries")
+
+    // Map images to exercises
+    let matchedCount = 0
+    exercisesWithImages.forEach((exercise, index) => {
+      const originalName = exercise.name.toLowerCase().trim()
+      const cleanName = originalName.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim()
+      const normalizedName = originalName.replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
+      
+      if (imageMap.has(originalName)) {
+        exercisesWithImages[index].imageUrl = imageMap.get(originalName)
+        matchedCount++
+      }
+      else if (imageMap.has(cleanName)) {
+        exercisesWithImages[index].imageUrl = imageMap.get(cleanName)
+        matchedCount++
+      }
+      else if (imageMap.has(normalizedName)) {
+        exercisesWithImages[index].imageUrl = imageMap.get(normalizedName)
+        matchedCount++
+      }
+      else {
+        // Try partial matching as last resort
+        for (const [imageName, imageUrl] of imageMap.entries()) {
+          if (imageName.includes(cleanName) || cleanName.includes(imageName)) {
+            exercisesWithImages[index].imageUrl = imageUrl
+            matchedCount++
+            break
+          }
+        }
+      }
+    })
+    
+    console.log(`Successfully mapped ${matchedCount} out of ${exercisesWithImages.length} exercises`)
+    
+    // Fallback strategy if low match rate
+    if (matchedCount < exercises.length * 0.3) {
+      console.log("Low match rate detected, trying fallback strategy...")
+      
+      const availableImages = Array.from(imageMap.values())
+      let fallbackIndex = 0
+      
+      exercisesWithImages.forEach((exercise, index) => {
+        if (!exercise.imageUrl && availableImages.length > 0) {
+          exercisesWithImages[index].imageUrl = availableImages[fallbackIndex % availableImages.length]
+          fallbackIndex++
+        }
+      })
+      
+      console.log("Fallback strategy applied")
+    }
+    
+    // Final fallback to GIF URLs
+    exercisesWithImages.forEach((exercise, index) => {
+      if (!exercise.imageUrl) {
+        exercisesWithImages[index].imageUrl = exercise.gifUrl
+      }
+    })
+
+    return exercisesWithImages
+  }
+
+  const paginatedExercises = useMemo(() => {
+    const startIndex = currentPage * limit
+    const endIndex = startIndex + limit
+    return filteredExercises.slice(startIndex, endIndex)
+  }, [filteredExercises, currentPage, limit])
+
+  const totalPages = Math.ceil(filteredExercises.length / limit)
+
+  // Updated filtering logic using useMemo
+  const applyFilters = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase().trim()
+
+    let filtered = allExercises.filter(exercise => {
+      const matchesSearch = !lowerSearch ||
+        exercise.name?.toLowerCase().includes(lowerSearch) ||
+        exercise.target?.toLowerCase().includes(lowerSearch) ||
+        exercise.bodyPart?.toLowerCase().includes(lowerSearch) ||
+        exercise.equipment?.toLowerCase().includes(lowerSearch) ||
+        exercise.instructions?.some(instr =>
+          instr.toLowerCase().includes(lowerSearch)
+        )
+
+      const matchesBodyPart = !selectedBodyPart || exercise.bodyPart === selectedBodyPart
+
+      return matchesSearch && matchesBodyPart
+    })
+
+    setFilteredExercises(filtered)
+    
+    // Reset to first page when filters change
+    setCurrentPage(0)
+    
+    return filtered
+  }, [allExercises, searchTerm, selectedBodyPart])
 
   // Fetch user's favorite workouts
   const fetchFavorites = async () => {
@@ -152,7 +406,7 @@ export default function WorkoutsPage() {
   // Add to favorites
   const addToFavorites = async () => {
     if (!selectedExercise || !user) return
-    
+
     setIsUpdating(true)
     try {
       await axios.post('/api/favWorkouts', {
@@ -223,7 +477,6 @@ export default function WorkoutsPage() {
 
   const handleSearch = (term: string) => {
     setSearchTerm(term)
-    setCurrentPage(0)
   };
 
   // Body parts for filtering
@@ -233,9 +486,9 @@ export default function WorkoutsPage() {
   ]
 
   useEffect(() => {
-    fetchExercises(currentPage * limit, selectedBodyPart)
+    fetchExercises()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, limit, selectedBodyPart])
+  }, [])
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -244,50 +497,17 @@ export default function WorkoutsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user])
 
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      setTotalPages(Math.ceil(filteredExercises.length / limit));
-      setTotalExercises(filteredExercises.length);
-    }
-    else {
-      setTotalPages(Math.ceil(exercises.length / limit));
-      setTotalExercises(exercises.length);
-    }
-  });
-
   const handleBodyPartChange = (bodyPart: string) => {
     setSelectedBodyPart(bodyPart)
-    setCurrentPage(0) // Reset to first page
   }
 
   const handleNextPage = () => {
-    setCurrentPage(prev => prev + 1)
+    setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))
   }
 
   const handlePrevPage = () => {
     setCurrentPage(prev => Math.max(0, prev - 1))
   }
-
-  const filteredExercises = useMemo(() => {
-    const lowerSearch = searchTerm.toLowerCase();
-
-    const filtered = exercises.filter(exercise => {
-      const matchesSearch = !searchTerm ||
-        exercise.name?.toLowerCase().includes(lowerSearch) ||
-        exercise.target?.toLowerCase().includes(lowerSearch) ||
-        exercise.bodyPart?.toLowerCase().includes(lowerSearch) ||
-        exercise.equipment?.toString().toLowerCase().includes(lowerSearch) ||
-        exercise.instructions?.some(instr =>
-          instr.toLowerCase().includes(lowerSearch)
-        );
-
-      const matchesBodyPart = !selectedBodyPart || exercise.bodyPart === selectedBodyPart;
-
-      return matchesSearch && matchesBodyPart;
-    });
-
-    return filtered;
-  }, [exercises, searchTerm, selectedBodyPart, currentPage, limit]);
 
   if (loading) {
     return (
@@ -308,7 +528,7 @@ export default function WorkoutsPage() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => fetchExercises(currentPage * limit, selectedBodyPart)}
+            onClick={() => fetchExercises()}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Try Again
@@ -409,7 +629,7 @@ export default function WorkoutsPage() {
 
         {/* Exercises Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {filteredExercises.slice(currentPage * limit, (currentPage + 1) * limit).map((exercise) => (
+          {paginatedExercises.map((exercise) => (
             <div key={exercise.id} className="bg-gradient-to-br from-yellow-50 to-yellow-100 relative rounded-xl overflow-hidden border-4 border-black hover:border-[#D433F8] shadow-[6px_6px_0px_0px_#000] hover:shadow-[6px_6x_0px_0px_#D433F8] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200">
               {/* Heart Icon with enhanced styling */}
               <button
@@ -429,7 +649,7 @@ export default function WorkoutsPage() {
               {/* Image section */}
               <div className="relative h-96 w-full overflow-hidden">
                 <img
-                  src={exercise.gifUrl}
+                  src={exercise.imageUrl || exercise.gifUrl}
                   alt={exercise.name}
                   className="w-full h-full object-cover"
                 />
@@ -519,37 +739,45 @@ export default function WorkoutsPage() {
 
         {/* Results Info */}
         <div className="text-center mt-8 mb-4 text-gray-600">
-          <p>Showing {Math.min(((currentPage + 1) * limit), totalExercises)} exercises</p>
+          <p>Showing {Math.min(currentPage * limit + 1, filteredExercises.length)} - {Math.min((currentPage + 1) * limit, filteredExercises.length)} of {filteredExercises.length} exercises</p>
           {selectedBodyPart && (
             <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedBodyPart}</span></p>
+          )}
+          {searchTerm && (
+            <p className="text-sm mt-1">Search: <span className="font-medium">"{searchTerm}"</span></p>
           )}
         </div>
 
         {/* Pagination */}
-        {!selectedBodyPart && (
-          <div className="flex justify-center items-center space-x-4">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 0}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                currentPage === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-4">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 0}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              currentPage === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-[#D433F8] text-white cursor-pointer'
-              }`}
-            >
-              <ChevronLeft />
-            </button>
-            <span className="text-gray-600 font-medium">
-              Page {currentPage + 1}
-            </span>
-            <button
-              onClick={handleNextPage}
-              className="px-4 py-2 rounded-lg bg-[#D433F8] text-white font-medium cursor-pointer transition-colors"
-            >
-              <ChevronRight />
-            </button>
-          </div>
-        )}
+            }`}
+          >
+            <ChevronLeft />
+          </button>
+          <span className="text-gray-600 font-medium">
+            Page {currentPage + 1} of {totalPages}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage >= totalPages - 1}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              currentPage >= totalPages - 1
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-[#D433F8] text-white hover:bg-[#B82FD4] cursor-pointer'
+            }`}
+          >
+            <ChevronRight />
+          </button>
+        </div>
+      )}
       </div>
 
       {/* Comment Modal */}
