@@ -82,6 +82,9 @@ export default function RecipesPage() {
   // Add this with your other state declarations (around line 75-85)
   const [expandedInstructions, setExpandedInstructions] = useState<Set<number>>(new Set())
 
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([])
+  const [hasMoreData, setHasMoreData] = useState(true)
+
   // Add this function with your other functions (around line 400-500)
   const toggleInstructions = (recipeId: number) => {
     setExpandedInstructions(prev => {
@@ -108,36 +111,75 @@ export default function RecipesPage() {
   // const [copySuccess, setCopySuccess] = useState(false)
   
   // Fetch recipes from the API
-  const fetchRecipes = async (from = 0, tagFilter = '') => {
+  const fetchRecipes = async () => {
     setLoading(true)
     setError(null)
     
     try {
-      const params: any = {
-        from: from.toString(),
-        size: size.toString()
-      }
+      let allFetchedRecipes: Recipe[] = []
+      let from = 0
+      const fetchSize = 50
+      let hasMore = true
+      let retryCount = 0
+      const maxRetries = 3
+      const maxRecipes = 350
+      
+      while (hasMore && from < maxRecipes) {
+        try {
+          const params: any = {
+            from: from.toString(),
+            size: fetchSize.toString()
+          }
+          // Call filter locally
 
-      // Add tag filter if selected
-      if (tagFilter) {
-        params.tags = tagFilter
-      }
+          const options = {
+            method: 'GET',
+            url: 'https://tasty.p.rapidapi.com/recipes/list',
+            params,
+            headers: {
+              'x-rapidapi-key': '8b4d17b550msh982a8b24ae8e7dfp1bf909jsn98b864509cd0',
+              'x-rapidapi-host': 'tasty.p.rapidapi.com'
+            },
+            timeout: 15000
+          }
 
-      const options = {
-        method: 'GET',
-        url: 'https://tasty.p.rapidapi.com/recipes/list',
-        params,
-        headers: {
-          'x-rapidapi-key': '8d084e0333msh09b57610e3f7260p111cccjsn2a0ec9764e85',
-          'x-rapidapi-host': 'tasty.p.rapidapi.com'
+          const response = await axios.request(options)
+          const newRecipes = response.data.results || []
+          
+          if (newRecipes.length === 0) {
+            hasMore = false
+          } else {
+            allFetchedRecipes = [...allFetchedRecipes, ...newRecipes]
+            from += fetchSize
+            retryCount = 0
+            
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
+        } catch (batchError: any) {
+          console.error(`Error fetching batch from ${from}:`, batchError)
+          
+          if (batchError.code === 'ECONNABORTED' || batchError.message.includes('timeout')) {
+            retryCount++
+            if (retryCount < maxRetries) {
+              console.log(`Retrying batch ${from}, attempt ${retryCount}`)
+              await new Promise(resolve => setTimeout(resolve, 2000 * retryCount))
+              continue
+            } else {
+              console.log(`Max retries reached for batch ${from}, using existing data`)
+              hasMore = false
+            }
+          } else if (batchError.response?.status === 429) {
+            console.log('Rate limit hit, waiting 5 seconds...')
+            await new Promise(resolve => setTimeout(resolve, 5000))
+            continue
+          } else {
+            throw batchError
+          }
         }
       }
-
-      console.log('Making API request to:', options.url)
-      console.log('With params:', params)
-
-      const response = await axios.request(options)
-      setRecipes(response.data.results || [])
+      
+      setAllRecipes(allFetchedRecipes)
+      setHasMoreData(from < maxRecipes)
     } catch (err: any) {
       console.error('Error fetching recipes:', err)
       
@@ -371,9 +413,11 @@ export default function RecipesPage() {
   ]
 
   useEffect(() => {
-    fetchRecipes(currentPage * size, selectedTag)
+    if (allRecipes.length === 0) {
+      fetchRecipes()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, size, selectedTag])
+  }, [selectedTag])
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -381,17 +425,6 @@ export default function RecipesPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, user])
-
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      setTotalPages(Math.ceil(filteredRecipes.length / size));
-      setTotalRecipes(filteredRecipes.length);
-    }
-    else {
-      setTotalPages(Math.ceil(recipes.length / size));
-      setTotalRecipes(recipes.length);
-    }
-  });
 
   const handleSearch = (term: string) => {
     setSearchTerm(term)
@@ -404,7 +437,9 @@ export default function RecipesPage() {
   }
 
   const handleNextPage = () => {
-    setCurrentPage(prev => prev + 1)
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(prev => prev + 1)
+    }
   }
 
   const handlePrevPage = () => {
@@ -428,25 +463,37 @@ export default function RecipesPage() {
   }
 
   const filteredRecipes = useMemo(() => {
-    const filtered = recipes.filter(recipe => {
+    const filtered = allRecipes.filter(recipe => {
       const ingredients = getMainIngredients(recipe);
       const matchesSearch = !searchTerm ||
-      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.total_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
-      recipe.prep_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
-      recipe.tags?.toString().includes(searchTerm.toLowerCase()) ||
-      ingredients?.some(ingredient =>
-        ingredient.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+        recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipe.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipe.total_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
+        recipe.prep_time_minutes?.toString().includes(searchTerm.toLowerCase()) ||
+        recipe.tags?.some(tag => tag.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        ingredients?.some(ingredient =>
+          ingredient.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       
-      const matchesTag = !selectedTag || recipeTags?.includes(selectedTag)
+      const matchesTag = !selectedTag || 
+        recipe.tags?.some(tag => tag.name === selectedTag);
       
-      return matchesSearch && matchesTag
+      return matchesSearch && matchesTag;
     })
     
     return filtered
-  }, [recipes, searchTerm, selectedTag, currentPage, size])
+  }, [allRecipes, searchTerm, selectedTag])
+
+  const paginatedRecipes = useMemo(() => {
+    const startIndex = currentPage * size
+    const endIndex = startIndex + size
+    return filteredRecipes.slice(startIndex, endIndex)
+  }, [filteredRecipes, currentPage, size])
+
+  useEffect(() => {
+    setTotalPages(Math.ceil(filteredRecipes.length / size));
+    setTotalRecipes(filteredRecipes.length);
+  }, [filteredRecipes.length, size]);
 
   if (loading) {
     return (
@@ -467,7 +514,7 @@ export default function RecipesPage() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Oops!</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => fetchRecipes(currentPage * size, selectedTag)}
+            onClick={() => fetchRecipes()}
             className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors"
           >
             Try Again
@@ -568,7 +615,7 @@ export default function RecipesPage() {
 
         {/* Recipes Grid - Updated for larger cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {filteredRecipes.map((recipe) => (
+          {paginatedRecipes.map((recipe) => (
             <div key={recipe.id} className="bg-orange-100 relative rounded-xl overflow-hidden font-bold border-4 border-black hover:border-amber-300 shadow-[6px_6px_0px_0px_#000] hover:shadow-[3px_3px_0px_0px_#D433FFD54FF8] hover:translate-x-[3px] hover:translate-y-[3px] transition-all duration-200">
               
               {/* Heart Icon */}
@@ -827,9 +874,14 @@ export default function RecipesPage() {
 
         {/* Results Info */}
         <div className="text-center mt-8 mb-4 text-gray-600">
-          <p>Showing {Math.min(((currentPage + 1) * size), totalRecipes)} recipes</p>
+          <p>Showing {Math.min(currentPage * 20 + 1, filteredRecipes.length)} - {Math.min((currentPage + 1) * 20, filteredRecipes.length)} of {filteredRecipes.length} recipes</p>
           {selectedTag && (
-            <p className="text-sm mt-1">Filtered by: <span className="font-medium capitalize">{selectedTag.replace(/_/g, ' ')}</span></p>
+            <p className="text-sm mt-1">
+              Filtered by: <span className="font-medium capitalize">{selectedTag.replace(/_/g, ' ')}</span>
+            </p>
+          )}
+          {searchTerm && (
+            <p className="text-sm mt-1">Search: <span className="font-medium">"{searchTerm}"</span></p>
           )}
         </div>
 
@@ -851,7 +903,12 @@ export default function RecipesPage() {
           </span>
           <button
             onClick={handleNextPage}
-            className="px-4 py-2 rounded-lg bg-amber-300 text-white font-medium hover:bg-amber-500 transition-colors"
+            disabled={currentPage >= totalPages - 1}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              currentPage >= totalPages - 1
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-amber-300 text-white hover:bg-amber-500'
+            }`}
           >
             <ChevronRight />
           </button>
