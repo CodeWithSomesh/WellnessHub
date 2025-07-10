@@ -68,14 +68,12 @@ interface FavoriteRecipe {
 export default function RecipesPage() {
   // Initialize State 
   const { user, isLoaded } = useUser()
-  const [recipes, setRecipes] = useState<Recipe[]>([])
   const [favorites, setFavorites] = useState<FavoriteRecipe[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedTag, setSelectedTag] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0);
-  const [totalRecipes, setTotalRecipes] = useState(0);
   const [size] = useState(20) // Limit to 20 recipes per page
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
@@ -83,7 +81,6 @@ export default function RecipesPage() {
   const [expandedInstructions, setExpandedInstructions] = useState<Set<number>>(new Set())
 
   const [allRecipes, setAllRecipes] = useState<Recipe[]>([])
-  const [hasMoreData, setHasMoreData] = useState(true)
 
   // Add this function with your other functions (around line 400-500)
   const toggleInstructions = (recipeId: number) => {
@@ -179,7 +176,6 @@ export default function RecipesPage() {
       }
       
       setAllRecipes(allFetchedRecipes)
-      setHasMoreData(from < maxRecipes)
     } catch (err: any) {
       console.error('Error fetching recipes:', err)
       
@@ -492,7 +488,6 @@ export default function RecipesPage() {
 
   useEffect(() => {
     setTotalPages(Math.ceil(filteredRecipes.length / size));
-    setTotalRecipes(filteredRecipes.length);
   }, [filteredRecipes.length, size]);
 
   if (loading) {
@@ -886,7 +881,7 @@ export default function RecipesPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex justify-center items-center space-x-4">
+        <div className={`flex justify-center items-center space-x-4`}>
           <button
             onClick={handlePrevPage}
             disabled={currentPage === 0}
