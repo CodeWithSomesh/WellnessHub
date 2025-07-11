@@ -29,7 +29,7 @@ const FavoriteWorkoutSchema = new Schema({
   },
   gifUrl: {
     type: String,
-    required: true,
+    //required: true,
   },
   instructions: [{
     type: String,
